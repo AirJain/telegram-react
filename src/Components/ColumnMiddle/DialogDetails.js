@@ -17,7 +17,8 @@ import SelectChatPlaceholder from './SelectChatPlaceholder';
 import { getSrc } from '../../Utils/File';
 import AppStore from '../../Stores/ApplicationStore';
 import ChatStore from '../../Stores/ChatStore';
-import FileStore from '../../Stores/FileStore';
+import FileStore from '../../Stores/FileStore'; 
+
 import './DialogDetails.css';
 
 class DialogDetails extends Component {
@@ -31,7 +32,7 @@ class DialogDetails extends Component {
             wallpaper: null,
             wallpaperSrc: null,
             chatSelectOptions: null,
-            chatOpenOptions: null
+            chatOpenOptions: null,  
         };
     }
 
@@ -190,8 +191,8 @@ class DialogDetails extends Component {
     scrollToMessage = () => {
         this.messagesList.scrollToMessage();
     };
-
-    render() {
+  
+    render() { 
         /*let groups = [];
         if (this.props.history.length > 0){
             let currentGroup = {
@@ -225,7 +226,7 @@ class DialogDetails extends Component {
             return (<MessageGroup key={x.key} senderUserId={x.senderUserId} messages={x.messages} onSelectChat={this.props.onSelectChat}/>);
         });*/
         const { chatId, messageId, chatOpenOptions, wallpaper, chatSelectOptions } = this.state;
-
+     
         let style = null;
         let src = null;
         if (wallpaper) {
@@ -257,8 +258,9 @@ class DialogDetails extends Component {
                 </div>
                 {chatSelectOptions && <SelectChatPlaceholder/>}
                 <PinnedMessages chatId={chatId}/>
-                <StickerSetDialog />
-                <ChatInfoDialog />
+                <StickerSetDialog /> 
+                <ChatInfoDialog chatId={chatId}/>
+                {/* <ChatInfoDialog permissions = {this.state.permissions}/> */}
             </div>
         );
     }

@@ -165,7 +165,7 @@ class MessageAuthor extends React.Component {
             const className = classNames([tileColor], 'message-author');
 
             return openUser ? (
-                <a className={className} onClick={this.handleSelect}>
+                <a className={className} onClick={this.handleSelect}> 
                     {fullName}
                 </a>
             ) : (

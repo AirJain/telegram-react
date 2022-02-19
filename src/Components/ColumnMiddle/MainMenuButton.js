@@ -29,8 +29,20 @@ import ChatStore from '../../Stores/ChatStore';
 import MessageStore from '../../Stores/MessageStore';
 import TdLibController from '../../Controllers/TdLibController';
 import './MainMenuButton.css';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import Button from '@material-ui/core/Button';
 
 class MainMenuButton extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+          openDialogs: false,
+        };
+    }
     state = {
         anchorEl: null
     };
@@ -53,6 +65,39 @@ class MainMenuButton extends React.Component {
         this.handleMenuClose();
         setTimeout(() => this.props.openChatDetails(), 150);
     };
+
+    // TODO
+    // 管理群组的函数
+    handleManageGroup = () => {
+        //let chatId = AppStore.getChatId();
+        // let chatId = 1073741889;
+        // let chatId = 1073742002;
+        // let chatId = 1073742002;
+          
+
+
+        // // let sfy = JSON.stringify({"parameters": {
+        // //     "chatId": chatId
+        // // }}) 
+
+        // TdLibController.send({
+        // '@type': 'sendCustomRequest',
+        // "method": "chats.getBannedRightex",
+        // "parameters":JSON.stringify({"chatId": chatId})
+        // })
+        // .then(result => {
+        //     debugger
+        // })
+        // .catch(err => {
+        //     debugger
+        // }); 
+        // this.handleMenuClose();
+        // this.setState({openDialogs:true})
+    };
+
+    handleManageGroupClose = () =>{
+        this.setState({openDialogs:false})
+    }
 
     handleClearHistory = () => {
         this.handleMenuClose();
@@ -99,6 +144,8 @@ class MainMenuButton extends React.Component {
     };
 
     render() {
+        
+
         const { t } = this.props;
         const { anchorEl } = this.state;
 
@@ -116,6 +163,33 @@ class MainMenuButton extends React.Component {
 
         return (
             <>
+            <Dialog
+                open={this.state.openDialogs}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+                PaperProps={{
+                style: {
+                    backgroundColor: "#fff",
+                },
+                }}
+                >
+
+                <DialogTitle id="alert-dialog-title">
+                    "Use Google's location service?"
+                </DialogTitle>
+
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        Hello 
+                    </DialogContentText>
+                </DialogContent>
+
+                <DialogActions>
+                    <Button onClick={this.handleManageGroupClose} color="primary">
+                            OK
+                    </Button>
+                </DialogActions>
+            </Dialog>
                 <IconButton
                     aria-owns={anchorEl ? 'simple-menu' : null}
                     aria-haspopup='true'
@@ -146,6 +220,14 @@ class MainMenuButton extends React.Component {
                         </ListItemIcon>
                         <ListItemText primary={getViewInfoTitle(chatId, t)} />
                     </MenuItem>
+                    {/* TODO   管理群组 */}
+                    {/* <MenuItem onClick={this.handleManageGroup}>
+                        <ListItemIcon>
+                            {isPrivateChat(chatId) ? <UserIcon /> : <GroupIcon />}
+                        </ListItemIcon>
+                        <ListItemText primary={t('ManageGroup')} />
+                    </MenuItem> */}
+
                     {clearHistory && (
                         <MenuItem onClick={this.handleClearHistory}>
                             <ListItemIcon>

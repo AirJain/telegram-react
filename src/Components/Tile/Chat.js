@@ -1,4 +1,12 @@
 /*
+ * @Author: your name
+ * @Date: 2022-01-16 14:44:46
+ * @LastEditTime: 2022-02-16 16:25:42
+ * @LastEditors: your name
+ * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ * @FilePath: \telegram-react-1.6.10\src\Components\Tile\Chat.js
+ */
+/*
  *  Copyright (c) 2018-present, Evgeny Nadymov
  *
  * This source code is licensed under the GPL v.3.0 license found in the
@@ -43,7 +51,7 @@ class Chat extends React.Component {
 
         return (
             <div className={classNames('chat', { 'chat-big': big })} onClick={this.handleClick}>
-                <div className='chat-wrapper'>
+                <div className='chat-wrapper'> 
                     <ChatTile big={big} chatId={chatId} onSelect={onTileSelect} showSavedMessages={showSavedMessages} />
                     {showTitle && (
                         <div className='chat-inner-wrapper'>

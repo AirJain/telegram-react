@@ -249,7 +249,7 @@ class Message extends Component {
         });
     };
 
-    handleSelectUser = userId => {
+    handleSelectUser = userId => { 
         openUser(userId, true);
     };
 
@@ -446,8 +446,7 @@ class Message extends Component {
             }
         }
 
-console.log(text[0],'look')
-
+        console.log(text[0],'look') 
       if (typeof (text[0]) == 'string'){
       if (text[0] && (text[0]).match(/^ct!([\s\S]*)!5!100!{"remittanceId":([\s\S]*),"payer":([\s\S]*),"payee":([\s\S]*),"amount":([\s\S]*)}$/g)) {
 
@@ -475,6 +474,12 @@ console.log(text[0],'look')
             【领取了红包】
           </span>
           ];
+      }else if(text[0] && (text[0]).match(/^ct!([\s\S]*)!5!200!{"remittanceId":([\s\S]*),"payer":([\s\S]*),"payee":([\s\S]*),"amount":([\s\S]*)}$/g)){
+        text[0] = [
+            <span style={{ color: 'grey' }}>
+              【领取了一笔转账】
+            </span>
+            ];
       }
 
       else if (text[0] && text[0] == 'ct!99914b932bd37a50b983c5e7c90ae93b!3!101!{}') {

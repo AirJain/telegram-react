@@ -109,7 +109,7 @@ export function getViewInfoTitle(chatId, t = x => x) {
     const chat = ChatStore.get(chatId);
     if (!chat) return;
 
-    const { type } = chat;
+    const { type } = chat; 
     switch (type['@type']) {
         case 'chatTypeBasicGroup': {
             return t('ViewGroupInfo');
@@ -878,7 +878,74 @@ function isChannelChat(chatId) {
 
     return false;
 }
+function isAdmin(chatId){
+    const chat = ChatStore.get(chatId);
+    if (!chat) return false;
 
+    const { type } = chat;
+    if (!type) return false;
+
+    switch (type['@type']) {
+        case 'chatTypeSupergroup': {
+            const supergroup = SupergroupStore.get(type.supergroup_id);
+            if (supergroup && supergroup.status) {
+                switch (supergroup.status['@type']) {
+                    case 'chatMemberStatusAdministrator': {
+                        return true;
+                    }
+                    case 'chatMemberStatusBanned': {
+                        return false;
+                    }
+                    case 'chatMemberStatusCreator': {
+                        return true;
+                    }
+                    case 'chatMemberStatusLeft': {
+                        return false;
+                    }
+                    case 'chatMemberStatusMember': {
+                        return false;
+                    }
+                    case 'chatMemberStatusRestricted': {
+                        return false;
+                    }
+                }
+            }
+            break;
+        }
+        case 'chatTypeBasicGroup': {
+            const basicGroup = BasicGroupStore.get(type.basic_group_id);
+            if (basicGroup && basicGroup.status) {
+                switch (basicGroup.status['@type']) {
+                    case 'chatMemberStatusAdministrator': {
+                        return true;
+                    }
+                    case 'chatMemberStatusBanned': {
+                        return false;
+                    }
+                    case 'chatMemberStatusCreator': {
+                        return true;
+                    }
+                    case 'chatMemberStatusLeft': {
+                        return false;
+                    }
+                    case 'chatMemberStatusMember': {
+                        return false;
+                    }
+                    case 'chatMemberStatusRestricted': {
+                        return false;
+                    }
+                }
+            }
+            break;
+        }
+        case 'chatTypePrivate':
+        case 'chatTypeSecret': {
+            return true;
+        }
+    }
+
+    return false;
+}
 function isChatMember(chatId) {
     const chat = ChatStore.get(chatId);
     if (!chat) return false;
@@ -1954,6 +2021,7 @@ export {
     isChannelChat,
     isChatUnread,
     isChatMember,
+    isAdmin,
     isChatVerified,
     isChatSecret,
     getChatTitle,

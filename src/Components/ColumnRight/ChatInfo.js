@@ -371,8 +371,7 @@ class ChatInfo extends React.Component {
                     onClose={this.handleCloseChatDetails}
                 />
             );
-        }
-
+        } 
         return popup ? (
             <>{content}</>
         ) : (

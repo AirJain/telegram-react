@@ -370,7 +370,7 @@ class Dialog extends Component {
                                     {isPrivateChat(chatId) ? <UserIcon /> : <GroupIcon />}
                                 </ListItemIcon>
                                 <ListItemText primary={getViewInfoTitle(chatId, t)} />
-                            </MenuItem>
+                            </MenuItem> 
                             { canMute && (
                                 <MenuItem onClick={this.handleMute}>
                                     {isMuted ? (

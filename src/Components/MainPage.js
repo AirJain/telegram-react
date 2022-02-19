@@ -135,7 +135,7 @@ class MainPage extends React.Component {
         const currentChatId = AppStore.getChatId();
         const currentDialogChatId = AppStore.dialogChatId;
         const currentMessageId = AppStore.getMessageId();
-
+ 
         if (popup) {
             if (currentDialogChatId !== chatId) {
                 TdLibController.clientUpdate({
@@ -159,7 +159,7 @@ class MainPage extends React.Component {
         }
     };
 
-    handleSelectUser = async (userId, popup) => {
+    handleSelectUser = async (userId, popup) => { 
         if (!userId) return;
 
         const chat = await TdLibController.send({

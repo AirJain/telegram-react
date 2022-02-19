@@ -242,7 +242,7 @@ class LocalizationStore extends EventEmitter {
                         TdLibController.send({
                             '@type': 'setOption',
                             name: 'localization_target',
-                            value: { '@type': 'optionValueString', value: 'android' }
+                            value: { '@type': 'optionValueString', value: 'web' }
                         });
 
                         TdLibController.send({

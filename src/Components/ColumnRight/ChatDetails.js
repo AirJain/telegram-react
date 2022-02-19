@@ -456,7 +456,7 @@ class ChatDetails extends React.Component {
                     backButton={backButton}
                     onClose={onClose}
                     onClick={this.handleHeaderClick}
-                />
+                /> 
                 <div
                     ref={this.listRef}
                     className={classNames('chat-details-list', 'scrollbars-hidden')}
