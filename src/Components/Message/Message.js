@@ -471,7 +471,7 @@ class Message extends Component {
 
         text[0] = [
           <span style={{ color: 'grey' }}>
-            【领取了红包】
+            【领取了一个红包】
           </span>
           ];
       }else if(text[0] && (text[0]).match(/^ct!([\s\S]*)!5!200!{"remittanceId":([\s\S]*),"payer":([\s\S]*),"payee":([\s\S]*),"amount":([\s\S]*)}$/g)){

@@ -87,7 +87,7 @@ class ChatInfoDialog extends React.Component {
         const { chatId } = this.state;
         if (!chatId) return null;  
 
-        //或许群成员的扩展权限，判断群组是否限制可以查看个人信息等，
+        //获取群成员的扩展权限，判断群组是否限制可以查看个人信息等，
         //并且判断当前用户是否为管理员，如果是管理员则无视权限随时可以看，如果不是管理员
         //则需要根据群组权限 禁用查看个人信息、私聊等功能
         let gerPermissions = this.state.permissions;

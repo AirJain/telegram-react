@@ -319,11 +319,13 @@ class TelegramApp extends Component {
             page = <NativeAppPage />;
         } else if (inactive) {
             page = <InactivePage />;
-        } else if (state) {
+        } else if (state) { 
             switch (state['@type']) {
                 case 'authorizationStateClosed':
                 case 'authorizationStateClosing':
                 case 'authorizationStateLoggingOut':
+                    // page = <AuthForm authorizationState={state} onChangePhone={this.handleChangePhone} onRequestQRCode={this.handleRequestQRCode}/>;
+                    // break;
                 case 'authorizationStateReady': {
                     break;
                 }
