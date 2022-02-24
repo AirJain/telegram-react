@@ -463,7 +463,15 @@ class Phone extends React.Component {
         if (suggestedLanguage === i18n.language && i18n.language !== LocalizationStore.fallbackLng) {
             nextLanguage = LocalizationStore.fallbackLng;
         }
+         
 
+        let classN = null;
+        if(connecting){
+            classN = { 'pointerEvent':'none'}; 
+        }else{
+            classN = {}; 
+        }
+        console.log(connecting + "ccccccc")
         return (
             
             <form className='auth-root' autoComplete='off'>
@@ -533,8 +541,9 @@ class Phone extends React.Component {
                     onClick={this.handleDone}>
                     {t('Next')}
                 </Button>
-                <Typography className='sign-in-continue-on'>
-                    <Link onClick={this.handleQRCode}>
+                {/* 判断是否加载完成，如果加载完成了，则将二维码的点击功能禁用，并显示灰色 */}
+                <Typography className='sign-in-continue-on' style={{pointerEvents: connecting ? 'none' :''}}>
+                    <Link style={{pointerEvents: connecting ? 'none' :'',color:connecting ?'#E0E0E0':'#50A2E9'}} onClick={this.handleQRCode}>
                         {t('LogInViaQR')}
                     </Link>
                 </Typography>
