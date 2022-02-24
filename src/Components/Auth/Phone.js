@@ -23,7 +23,12 @@ import OptionStore from '../../Stores/OptionStore';
 import LocalizationStore from '../../Stores/LocalizationStore';
 import TdLibController from '../../Controllers/TdLibController';
 import './Phone.css';
-
+import Dialog from '@material-ui/core/Dialog'; 
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogActions from '@material-ui/core/DialogActions';
+import { modalManager } from '../../Utils/Modal';
 
 export function cleanProgressStatus(status) {
     if (!status) return status;
@@ -197,7 +202,8 @@ class Phone extends React.Component {
             keep: true,
             notValid : true,
             phone,
-            country
+            country,
+            waitingDialog:false
         };
 
         this.phoneInputRef = React.createRef();
@@ -319,18 +325,21 @@ class Phone extends React.Component {
     };
 
     handleDone = () => {
-        const { phone } = this.state;
-        if (!isValidPhoneNumber(phone)) {
-            this.setState({ error: { code: 'InvalidPhoneNumber' } });
-            return;
-        }
-
-        this.setState({ error: null, loading: true });
-        TdLibController.clientUpdate({
-            '@type': 'clientUpdateSetPhone',
-            phone
-        });
-        
+        if(this.onIsConnecting() === false){
+            const { phone } = this.state;
+            if (!isValidPhoneNumber(phone)) {
+                this.setState({ error: { code: 'InvalidPhoneNumber' } });
+                return;
+            }
+    
+            this.setState({ error: null, loading: true });
+            TdLibController.clientUpdate({
+                '@type': 'clientUpdateSetPhone',
+                phone
+            });
+        }else{
+            this.onOpenDialog();
+        }   
     };
 
     handleChangeLanguage = () => {
@@ -411,14 +420,33 @@ class Phone extends React.Component {
     };
 
     handleQRCode = () => {
-        const { onRequestQRCode } = this.props;
-
-        onRequestQRCode && onRequestQRCode();
+        const { onRequestQRCode } = this.props;   
+        if(this.onIsConnecting() === false){
+            onRequestQRCode && onRequestQRCode(); 
+        }else{
+            this.onOpenDialog();
+        } 
     };
+
+    onIsConnecting = () => {
+        const { connecting} = this.state; 
+        if(!connecting){
+            return false; 
+        }else{
+            return true; 
+        } 
+    }
+
+    onOpenDialog = ()=>{
+        this.setState({ waitingDialog: true });
+    }
+    onCloseDialog = ()=>{
+        this.setState({ waitingDialog: false });
+    }
 
     render() {
         const { data, i18n, t } = this.props;
-        const { connecting, loading, error, suggestedLanguage, keep, phone, country, notValid } = this.state;
+        const { waitingDialog,connecting, loading, error, suggestedLanguage, keep, phone, country, notValid } = this.state;
 
         let errorString = '';
         if (error) {
@@ -437,6 +465,7 @@ class Phone extends React.Component {
         }
 
         return (
+            
             <form className='auth-root' autoComplete='off'>
                 <Typography variant='body1' className='auth-title'>
                     <span>{title}</span>
@@ -517,6 +546,26 @@ class Phone extends React.Component {
                         {/* ContinueOnThisLanguage */}
                     </Typography>
                 )}
+
+                <Dialog
+                    manager={modalManager}
+                    transitionDuration={0}
+                    open={waitingDialog}
+                    onClose={this.onCloseDialog}
+                    aria-labelledby='fatal-error-dialog-title'
+                    aria-describedby='fatal-error-dialog-description'>
+                    <DialogTitle id='fatal-error-dialog-title'>Gochat</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText id='fatal-error-dialog-description'>
+                           正在加载中...请稍后再重试......
+                        </DialogContentText>
+                    </DialogContent> 
+                    <DialogActions> 
+                        <Button onClick={this.onCloseDialog} color='primary' autoFocus>
+                            关闭
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </form>
         );
     }
