@@ -26,8 +26,8 @@ import UserStore from '../Stores/UserStore';
 import PlayerStore from '../Stores/PlayerStore';
 import TdLibController from '../Controllers/TdLibController';
 import '../TelegramApp.css';
-import Actions from './Actions';
-
+import Actions from './Actions'; 
+import { isAdmin } from '../Utils/Chat';  
 class MainPage extends React.Component {
     constructor(props) {
         super(props);
@@ -43,11 +43,13 @@ class MainPage extends React.Component {
             isSmallWidth,
             forwardInfo: null,
             instantViewContent: null,
-            videoInfo: null
+            videoInfo: null,
+            permissions:null,
         };
     }
 
     componentDidMount() {
+        TdLibController.on('update', this.onUpdateNewPermission); 
         UserStore.on('clientUpdateOpenUser', this.onClientUpdateOpenUser);
         ChatStore.on('clientUpdateOpenChat', this.onClientUpdateOpenChat);
 
@@ -61,6 +63,7 @@ class MainPage extends React.Component {
     }
 
     componentWillUnmount() {
+        TdLibController.off('update', this.onUpdateNewPermission);
         UserStore.off('clientUpdateOpenUser', this.onClientUpdateOpenUser);
         ChatStore.off('clientUpdateOpenChat', this.onClientUpdateOpenChat);
 
@@ -71,6 +74,39 @@ class MainPage extends React.Component {
         AppStore.off('clientUpdateForward', this.onClientUpdateForward);
         InstantViewStore.off('clientUpdateInstantViewContent', this.onClientUpdateInstantViewContent);
         PlayerStore.off('clientUpdatePictureInPicture', this.onClientUpdatePictureInPicture);
+    }
+
+    componentWillReceiveProps(nextProps) {
+        this.onGetPermission(nextProps.chatId);
+    }
+
+    onGetPermission = (getChatId) =>{ 
+        if(!getChatId)
+            return;
+        let that = this;
+        //let chatId = 1073742002;   
+        const chatId1 = getChatId;  
+        let chatId = Math.abs(chatId1);
+        chatId = chatId.toString(); 
+        chatId = chatId.slice(3); 
+        chatId = parseInt(chatId); 
+        let getAdmin = isAdmin(chatId1);
+        that.setState({admin:getAdmin});
+        TdLibController.send({
+        '@type': 'sendCustomRequest',
+        "method": "chats.getBannedRightex",
+        "parameters":JSON.stringify({"chatId": chatId})
+        })
+        .then(data => { 
+            if(data.result){
+                let newResult = JSON.parse(data.result);  
+                 that.setState({permissions:newResult.data ? newResult.data:{}})   
+               
+            } 
+        })
+        .catch(err => {  
+            console.log("err on get permissions");
+        });  
     }
 
     onClientUpdatePictureInPicture = update => {
@@ -97,13 +133,12 @@ class MainPage extends React.Component {
 
     onClientUpdateOpenChat = update => {
         const { chatId, messageId, popup, options } = update;
-
+        this.onGetPermission(chatId);
         this.handleSelectChat(chatId, messageId, popup, options || AppStore.chatSelectOptions);
     };
 
     onClientUpdateOpenUser = update => {
-        const { userId, popup } = update;
-
+        const { userId, popup } = update; 
         this.handleSelectUser(userId, popup);
     };
 
@@ -131,13 +166,44 @@ class MainPage extends React.Component {
         this.setState({ forwardInfo: info });
     };
 
+    onUpdateNewPermission = update => { 
+        switch (update['@type']) {
+         case'updateNewCustomEvent': { 
+ 
+             let event =JSON.parse(update.event);
+             if(event.action === "chats.rights.onUpdate"){
+                let permissions = event.data;
+                this.setState({permissions:permissions})  
+             } 
+         }
+         default:
+             break;
+         }
+     }
+
     handleSelectChat = (chatId, messageId = null, popup = false, options = {}) => {
         const currentChatId = AppStore.getChatId();
         const currentDialogChatId = AppStore.dialogChatId;
-        const currentMessageId = AppStore.getMessageId();
- 
+        const currentMessageId = AppStore.getMessageId(); 
         if (popup) {
-            if (currentDialogChatId !== chatId) {
+            let gerPermissions = this.state.permissions;
+            let getAdmin = this.state.admin;
+            let isShow = false; 
+            //获取群成员的扩展权限，判断群组是否限制可以查看个人信息等， 
+            //并且判断当前用户是否为管理员，如果是管理员则无视权限随时可以看，如果不是管理员
+            //则需要根据群组权限 禁用查看个人信息、私聊等功能
+            if(getAdmin){
+                isShow = true;
+            }else{
+                if(gerPermissions){ 
+                    if(gerPermissions.banWhisper || gerPermissions.banSendDmMention){
+                        isShow = false; 
+                    } else{
+                        isShow = true;
+                    }
+                }
+            } 
+            if (currentDialogChatId !== chatId && isShow === true) {
                 TdLibController.clientUpdate({
                     '@type': 'clientUpdateDialogChatId',
                     chatId
@@ -159,7 +225,7 @@ class MainPage extends React.Component {
         }
     };
 
-    handleSelectUser = async (userId, popup) => { 
+    handleSelectUser = async (userId, popup) => {  
         if (!userId) return;
 
         const chat = await TdLibController.send({
