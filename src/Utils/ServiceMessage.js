@@ -9,7 +9,7 @@ import React from 'react';
 import Currency from './Currency';
 import MessageAuthor from '../Components/Message/MessageAuthor';
 import { isChannelChat, isSupergroup } from './Chat';
-import { getUserShortName, isMeUser } from './User';
+import { getUserShortName, isMeUser,getUserFullName } from './User'; 
 import ChatStore from '../Stores/ChatStore';
 import LStore from '../Stores/LocalizationStore';
 import MessageStore from '../Stores/MessageStore';
@@ -169,7 +169,13 @@ export function getServiceMessageContent(message, openUser = false) {
             }
         }
     }
-
+    //获取用户昵称
+    let userName = null;
+    let newText = null;
+    if(sender.user_id){
+        userName = getUserFullName(sender.user_id); 
+    } 
+    
     switch (content['@type']) {
         case 'messageExpiredPhoto': {
             return LStore.getString('AttachPhotoExpired');
@@ -239,8 +245,8 @@ export function getServiceMessageContent(message, openUser = false) {
                         if (isMeUser(memberUserId)) {
                             return LStore.getString('ChannelMegaJoined');
                         }
-
-                        return LStore.replace(LStore.getString('ActionAddUserSelfMega'), 'un1', <MessageAuthor key='un1' sender={sender} openUser={openUser} />);
+                        newText = userName + " 加入了群组";
+                        return LStore.replace(newText, 'un1', <MessageAuthor key='un1' sender={sender} openUser={openUser} />);
                     }
 
                     if (isOutgoing) {
@@ -256,8 +262,13 @@ export function getServiceMessageContent(message, openUser = false) {
 
                 if (isMeUser(memberUserId)) {
                     if (isSupergroup(chat_id)) {
-                        if (!isChannel) {
-                            return LStore.replace(LStore.getString('MegaAddedBy'), 'un1', <MessageAuthor key='un1' sender={sender} openUser={openUser} />);
+                        if (!isChannel) { 
+                            let userMemberName = null;
+                            if(memberUserId){
+                                userMemberName = getUserFullName(memberUserId); 
+                            }  
+                            newText = userName + " 邀请了 " +  userMemberName+ " 进群组";
+                            return LStore.replace(newText, 'un1', <MessageAuthor key='un1' sender={sender} openUser={openUser} />);
                         }
 
                         return LStore.replace(LStore.getString('ChannelAddedBy'), 'un1', <MessageAuthor key='un1' sender={sender} openUser={openUser} />);
@@ -284,11 +295,14 @@ export function getServiceMessageContent(message, openUser = false) {
             return LStore.replaceTwo(LStore.getString('ActionAddUser'), 'un1', <MessageAuthor key='un1' sender={sender} openUser={openUser} />, 'un2', members);
         }
         case 'messageChatJoinByLink': {
+            //当前行为是通过邀请链接进入群聊时，返回名字+描述，底下的return 暂时不知道他是为了做什么，先注释掉
+           
             if (isOutgoing) {
-                return LStore.getString('ActionInviteYou');
+                return userName + " 通过邀请链接加入群组";
+                // return LStore.getString('ActionInviteYou');
             }
-
-            return LStore.replace(LStore.getString('ActionInviteUser'), 'un1', <MessageAuthor key='un1' sender={sender} openUser={openUser} />);
+            newText = userName + " 通过邀请链接加入群组"; 
+            return LStore.replace(newText, 'un1', <MessageAuthor key='un1' sender={sender} openUser={openUser} />);
         }
         case 'messageChatDeleteMember': {
             if (content.user_id === sender.user_id) {
@@ -368,8 +382,8 @@ export function getServiceMessageContent(message, openUser = false) {
                     if (text.length >= maxLength) {
                         text = text.substring(0, maxLength);
                     }
-
-                    return LStore.replace(LStore.formatString('ActionPinnedText', text), 'un1', author);
+                    newText = userName + " 置顶了一段文本 ";
+                    return LStore.replace(LStore.formatString(newText, text), 'un1', author);
                 }
                 case 'messageVenue': {
                     return LStore.replace(LStore.getString('ActionPinnedGeo'), 'un1', author);
