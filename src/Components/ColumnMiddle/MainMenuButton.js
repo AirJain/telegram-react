@@ -221,12 +221,12 @@ class MainMenuButton extends React.Component {
                         <ListItemText primary={getViewInfoTitle(chatId, t)} />
                     </MenuItem>
                     {/* TODO   管理群组 */}
-                    {/* <MenuItem onClick={this.handleManageGroup}>
+                    <MenuItem onClick={this.handleManageGroup}>
                         <ListItemIcon>
                             {isPrivateChat(chatId) ? <UserIcon /> : <GroupIcon />}
                         </ListItemIcon>
                         <ListItemText primary={t('ManageGroup')} />
-                    </MenuItem> */}
+                    </MenuItem>
 
                     {clearHistory && (
                         <MenuItem onClick={this.handleClearHistory}>
