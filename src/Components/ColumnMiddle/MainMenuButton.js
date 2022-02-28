@@ -379,6 +379,7 @@ class MainMenuButton extends React.Component {
     //从服务器端接收  权限更新的推送。
     onReceiveUpdateNewPermission = update => {   
         switch (update['@type']) {
+            //监听聊天室的权限推送
             case 'updateChatPermissions':
                 let per = update.permissions;  
                 let newPermissions = {};
