@@ -150,6 +150,7 @@ class MainMenuButton extends React.Component {
         this.setState({ permissionsDialog: false });
     } 
   
+    //获取服务器上的 禁止群聊/禁止发媒体文件/是否能邀请好友等功能
     getChatPermissions = () =>{ 
         const chatId = AppStore.getChatId();
         TdLibController.send({
@@ -255,17 +256,12 @@ class MainMenuButton extends React.Component {
         this.UpdateChatPermissions('canInviteUsers',checked);  
     };  
 
-
+    //修改权限----是否禁言/是否能发送媒体/是否能邀请好友。
     UpdateChatPermissions = (type,open) => {
+        
         const {chatPermissions} = this.state;
         switch(type){
-            case 'canSendMessage':
-                // if(open == true){
-                //     chatPermissions.can_send_messages = open;
-                //     chatPermissions.can_send_media_messages = open;
-                // }else{
-                //     chatPermissions.can_send_messages = open; 
-                // }
+            case 'canSendMessage': 
                 chatPermissions.can_send_messages = open; 
                 break;
             case 'canSendMedia':
@@ -289,14 +285,12 @@ class MainMenuButton extends React.Component {
             console.log("ok on update permissions");
         }).finally(() => {
              
-        }).catch(e => {
-            debugger
-
+        }).catch(e => {  
             console.log("err on update permissions");
         }); 
     };
 
-    //向服务器提桥更新权限请求。
+    //修改权限---modifyBannedRightex里的相关权限。
     UpdateNewPermission = (type,open) =>{
         const {permissions} = this.state;
         open = open;
@@ -354,6 +348,7 @@ class MainMenuButton extends React.Component {
         });  
     }
 
+    //获取chatid      自定义的函数需要将chatid 去掉 负数
     fixChatId = (chatId1) =>{
         let chatId = Math.abs(chatId1);
         chatId = chatId.toString(); 
