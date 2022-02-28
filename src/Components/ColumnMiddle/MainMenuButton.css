@@ -21,4 +21,33 @@
 .progress-button {
     margin-right: 12px !important;
     padding: 0 !important;
+} 
+
+.MuiSwitch-colorSecondary.Mui-checked {
+    color: rgb(25, 118, 210);
+}
+
+.MuiSwitch-colorSecondary.Mui-checked + .MuiSwitch-track {
+    background-color: rgb(25, 118, 210);
+}
+
+.allCenter{
+    display: flex;
+    display: -webkit-flex; 
+    align-items:center;
+    justify-content:center;
+}
+
+.mgr_30{
+    margin-right:40px;
+}
+
+.left_right_align{
+    display:flex;
+    flex-direction:row;
+    justify-content:space-between;
+} 
+
+.mgb_4{
+    margin-bottom: 4px;
 }

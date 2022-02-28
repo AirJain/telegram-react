@@ -194,8 +194,11 @@ export function getServiceMessageContent(message, openUser = false) {
             if (isChannel) {
                 return LStore.getString('ActionCreateChannel');
             }
-
-            return LStore.getString('ActionCreateMega');
+            if(userName){
+                return  userName + " 创建了群聊"; 
+            }else{
+                return LStore.getString('ActionCreateMega'); 
+            }
         }
         case 'messageChatChangeTitle': {
             const { title } = content;

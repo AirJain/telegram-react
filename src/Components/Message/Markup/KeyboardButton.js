@@ -23,10 +23,18 @@ import MessageStore from '../../../Stores/MessageStore';
 import UserStore from '../../../Stores/UserStore';
 import TdLibController from '../../../Controllers/TdLibController';
 import './KeyboardButton.css';
-
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import Button from '@material-ui/core/Button';
+import { modalManager } from '../../../Utils/Modal'; 
 class KeyboardButton extends React.Component {
     state = {
-        loading: false
+        loading: false,
+        joinDialog:false,
+        groupCode:null
     }
 
     handleCallbackQueryAnswer = (type, result, message) => {
@@ -82,8 +90,7 @@ class KeyboardButton extends React.Component {
         event.preventDefault();
         event.stopPropagation();
 
-        const { chatId, messageId, type } = this.props;
-
+        const { chatId, messageId, type } = this.props; 
         switch (type['@type']) {
             case 'inlineKeyboardButtonTypeBuy': {
                 showAlert({
@@ -239,9 +246,34 @@ class KeyboardButton extends React.Component {
             }
             case 'inlineKeyboardButtonTypeUrl': {
                 /// qwerty_bot
-                const { url } = type;
+                // const { url } = type;
+                const url00 = type.url;
+                let result = null;
+                let groupCode = null;
+                let splitUrl = url00.split('=');
+                let isGroup = false;
+                if(splitUrl[1]){ 
 
-                showOpenUrlAlert(url, { punycode: false, ask: true, tryTelegraph: true });
+                    groupCode ="t.me/joinchat/" + splitUrl[1]; 
+                    result = await TdLibController.send({
+                        '@type': 'checkChatInviteLink',
+                        invite_link: groupCode, 
+                    }).then(result =>{
+                        isGroup = true;
+                        this.setState({groupCode:groupCode});
+                    }).finally(data => {
+                        if(isGroup){ 
+                            this.onOpenDialog(); 
+                       }else{
+                            showOpenUrlAlert(url00, { punycode: false, ask: true, tryTelegraph: true });
+                       } 
+                    }).catch(e => {
+                        isGroup = false;
+                    }); 
+                }  
+
+              
+                
                 break;
             }
         }
@@ -273,23 +305,72 @@ class KeyboardButton extends React.Component {
         }
     }
 
+
+    onOpenDialog = () =>{
+        this.setState({ joinDialog: true });
+    }
+    onCloseDialog = () =>{
+        this.setState({ joinDialog: false });
+    }
+    
+    onConfirmJoin = () =>{
+         
+            const {groupCode} = this.state;
+            if(groupCode){
+                TdLibController.send({
+                    '@type': 'joinChatByInviteLink',
+                    invite_link: groupCode, 
+                }).then(result =>{
+                     
+                }).finally(data => {
+                     this.onCloseDialog();
+                }).catch(e => {
+                     
+                }); 
+            }
+         
+       
+    }
+
     render() {
         const { text, type } = this.props;
-        const { loading } = this.state;
-
-        const icon = this.getIcon(type);
-
+        const { loading ,joinDialog} = this.state; 
+        const icon = this.getIcon(type); 
         return (
-            <ListItem className='keyboard-button' button onClick={this.handleClick}>
-                {text}
-                {icon}
-                {loading && (
-                    <PendingIcon
-                        className='keyboard-button-progress'
-                        viewBox='0 0 14 14'
-                    />
-                )}
-            </ListItem>
+            <>
+                 <Dialog
+                    manager={modalManager}
+                    transitionDuration={0}
+                    open={joinDialog}
+                    onClose={this.onCloseDialog}
+                    aria-labelledby='fatal-error-dialog-title'
+                    aria-describedby='fatal-error-dialog-description'>
+                    <DialogTitle id='fatal-error-dialog-title'>提示</DialogTitle>
+                    <DialogContent> 
+                        <DialogContentText>
+                            您确定要加入该群组吗？
+                        </DialogContentText>
+                    </DialogContent>  
+                    <DialogActions> 
+                        <Button onClick={this.onConfirmJoin} color='primary' autoFocus>
+                            确定
+                        </Button>
+                        <Button onClick={this.onCloseDialog} color='primary' autoFocus>
+                            关闭
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+                <ListItem className='keyboard-button' button onClick={this.handleClick}>
+                    {text}
+                    {icon}
+                    {loading && (
+                        <PendingIcon
+                            className='keyboard-button-progress'
+                            viewBox='0 0 14 14'
+                        />
+                    )}
+                </ListItem>
+            </> 
         );
     }
 
