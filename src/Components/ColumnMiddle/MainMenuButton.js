@@ -40,13 +40,13 @@ import Switch from '@material-ui/core/Switch';
 import Divider from '@material-ui/core/Divider';  
 import { isAdmin } from '../../Utils/Chat';  
 import { bool } from 'prop-types';
+import User from '../../Assets/Icons/User';
 class MainMenuButton extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
           openDialogs: false,
-          permissionsDialog:false,
-          checkedPublic:false,  
+          permissionsDialog:false, 
           admin:null,
           permissions:{
             banSendDmMention: false,
@@ -56,8 +56,17 @@ class MainMenuButton extends React.Component {
             banWhisper: false,
             kickWhoSendKeyword: false,
             showKickMessage: false,
-          },
-          
+          }, 
+          chatPermissions:{  
+            can_add_web_page_previews: false,
+            can_change_info: false,
+            can_invite_users: false,
+            can_pin_messages: false,
+            can_send_media_messages: false,
+            can_send_messages: false,
+            can_send_other_messages: false,
+            can_send_polls: false,
+          }
         };
     }
     state = {
@@ -129,7 +138,7 @@ class MainMenuButton extends React.Component {
             requestBlockSender(sender);
         }
 
-    };
+    }; 
 
     //打开权限管理弹窗。 必须加上 handleMenuClose 不然会报错，很严重的错！
     onOpenDialog = ()=>{ 
@@ -141,6 +150,31 @@ class MainMenuButton extends React.Component {
         this.setState({ permissionsDialog: false });
     } 
   
+    getChatPermissions = () =>{ 
+        const chatId = AppStore.getChatId();
+        TdLibController.send({
+            '@type': 'getChat',
+            "chat_id": chatId, 
+            })
+            .then(data => { 
+                if(data){
+                    if(data.permissions){
+                        let newPermissions = {};
+                       
+                        // newPermissions.can_send_media_messages = data.permissions.can_send_media_messages;
+                        // newPermissions.can_send_messages = data.permissions.can_send_messages;
+                        // newPermissions.can_invite_users = data.permissions.can_invite_users; 
+                        this.setState({chatPermissions:data.permissions});
+                        // this.setState({chatPermissions:data.permissions}); 
+                    }
+                }
+               
+            })
+            .catch(err => {   
+                console.log("err on get permissions");
+        });   
+    }
+    
     //获取服务器上的 权限管理， 禁止私聊等功能。。
     getBannedRightex = () =>{   
         const getChatId = AppStore.getChatId();
@@ -171,43 +205,97 @@ class MainMenuButton extends React.Component {
         });  
     } 
   
-    //当switch的checked发生变化时调用的函数。
+    //当switch的checked发生变化时调用的函数。 禁止私聊switch 发生变化
     handleChangeBanWhisper = (event) => { 
         let checked = event.target.checked;  
         this.UpdateNewPermission('banWhisper',checked);  
     };
-
+    //禁止发送网页链接 switch 发生变化
     handleChangeBanSendWebLink = (event) => { 
         let checked = event.target.checked; 
         this.UpdateNewPermission('banSendWebLink',checked);  
     };
-
+    //禁止发送二维码switch 发生变化
     handleChangeBanSendQRcode = (event) => { 
         let checked = event.target.checked; 
         this.UpdateNewPermission('banSendQRcode',checked);  
     }; 
-    
+    //禁止发送关键字switch 发生变化
     handleChangeBanSendKeyword = (event) => { 
         let checked = event.target.checked; 
         this.UpdateNewPermission('banSendKeyword',checked);  
     };
-
+    //禁止发送dm@switch 发生变化
     handleChangeBanSendDmMention = (event) => { 
         let checked = event.target.checked; 
         this.UpdateNewPermission('banSendDmMention',checked);  
     };   
-
+    //发送敏感词移出群聊switch 发生变化
     handleChangeKickWhoSendKeyword = (event) => { 
         let checked = event.target.checked; 
-        this.UpdateNewPermission('banSendKeyword',checked);  
+        this.UpdateNewPermission('kickWhoSendKeyword',checked);  
     };
-
+    //禁止发送消息switch 发生变化
     handleChangeShowKickMessage = (event) => { 
         let checked = event.target.checked; 
         this.UpdateNewPermission('ShowKickMessage',checked);  
     };  
+    //禁止发送媒体文件switch 发生变化
+    handleChangeCanSendMedia = (event) => { 
+        let checked = event.target.checked; 
+        this.UpdateChatPermissions('canSendMedia',checked);  
+    };  
+    //禁止发送信息switch 发生变化
+    handleChangeCanSendMessage= (event) => { 
+        let checked = event.target.checked; 
+        this.UpdateChatPermissions('canSendMessage',checked);  
+    };  
+    handleChangeCanInviteUsers = (event) => { 
+        let checked = event.target.checked; 
+        this.UpdateChatPermissions('canInviteUsers',checked);  
+    };  
 
-   
+
+    UpdateChatPermissions = (type,open) => {
+        const {chatPermissions} = this.state;
+        switch(type){
+            case 'canSendMessage':
+                // if(open == true){
+                //     chatPermissions.can_send_messages = open;
+                //     chatPermissions.can_send_media_messages = open;
+                // }else{
+                //     chatPermissions.can_send_messages = open; 
+                // }
+                chatPermissions.can_send_messages = open; 
+                break;
+            case 'canSendMedia':
+                chatPermissions.can_send_media_messages = open;
+                break;
+            case 'canInviteUsers':
+                chatPermissions.can_invite_users = open;
+                break;
+        } 
+        const chatId1 = AppStore.getChatId(); 
+        TdLibController.send({ 
+            "@type": "setChatPermissions",
+            "chat_id": chatId1,
+            "permissions": {
+                "@type": "chatPermissions",
+                "can_send_messages": chatPermissions.can_send_messages ,
+                "can_send_media_messages": chatPermissions.can_send_media_messages ,
+                "can_invite_users":chatPermissions.can_invite_users
+        }
+        }).then(result =>{  
+            console.log("ok on update permissions");
+        }).finally(() => {
+             
+        }).catch(e => {
+            debugger
+
+            console.log("err on update permissions");
+        }); 
+    };
+
     //向服务器提桥更新权限请求。
     UpdateNewPermission = (type,open) =>{
         const {permissions} = this.state;
@@ -233,13 +321,7 @@ class MainMenuButton extends React.Component {
                 break; 
             case 'ShowKickMessage':
                 permissions.showKickMessage = open;
-                break;
-            // case 'banSendKeyword':
-            //     permissions.banSendKeyword = open;
-            //     break; 
-            // case 'banSendKeyword':
-            //     permissions.banSendKeyword = open;
-            //     break;
+                break; 
             default:
                 break;
         } 
@@ -248,10 +330,7 @@ class MainMenuButton extends React.Component {
         if(chatId1 > 0){ 
             isSuper = true;
         }
-        let chatId = Math.abs(chatId1);
-        chatId = chatId.toString(); 
-        chatId = chatId.slice(3); 
-        chatId = parseInt(chatId); 
+        let chatId = this.fixChatId(chatId1);
         TdLibController.send({
             '@type': 'sendCustomRequest',
             "method": "chats.modifyBannedRightex", 
@@ -265,19 +344,27 @@ class MainMenuButton extends React.Component {
                 banWhisper: permissions.banWhisper,
                 kickWhoSendKeyword: permissions.kickWhoSendKeyword,
                 showKickMessage: permissions.showKickMessage, 
-            })
-           
-            
+            })  
             })
             .then(data => {  
+                 
             })
             .catch(err => {   
                 console.log("err on update permissions");
         });  
     }
 
+    fixChatId = (chatId1) =>{
+        let chatId = Math.abs(chatId1);
+        chatId = chatId.toString(); 
+        chatId = chatId.slice(3); 
+        chatId = parseInt(chatId); 
+        return chatId;
+    }
+
     componentDidMount() {  
         this.getBannedRightex();
+        this.getChatPermissions();
         TdLibController.on('update', this.onReceiveUpdateNewPermission);  
         
     }
@@ -288,40 +375,47 @@ class MainMenuButton extends React.Component {
     //从服务器端接收  权限更新的推送。
     onReceiveUpdateNewPermission = update => {   
         switch (update['@type']) {
-         case'updateNewCustomEvent': {   
-             let event =JSON.parse(update.event); 
-             if(event.action === "chats.rights.onUpdate"){
-                let permissions = event.data;
-                let newPermissions = {}; 
-                if(permissions){ 
-                    newPermissions.banSendDmMention = permissions.banSendDmMention;
-                    newPermissions.banSendKeyword = permissions.banSendKeyword;
-                    newPermissions.banSendQRcode = permissions.banSendQRcode;
-                    newPermissions.banSendWebLink = permissions.banSendWebLink;
-                    newPermissions.banWhisper = permissions.banWhisper;
-                    newPermissions.kickWhoSendKeyword = permissions.kickWhoSendKeyword;
-                    newPermissions.showKickMessage = permissions.showKickMessage;
-                    this.setState({permissions:newPermissions});
-                }
-               
-             } 
-         }
-         default:
-             break;
-         }
+            case 'updateChatPermissions':
+                let per = update.permissions;  
+                let newPermissions = {};
+                newPermissions.can_send_media_messages = per.can_send_media_messages;
+                newPermissions.can_send_messages = per.can_send_messages;
+                newPermissions.can_invite_users = per.can_invite_users; 
+                this.setState({chatPermissions:per});
+                break;
+            case'updateNewCustomEvent': {   
+                let event =JSON.parse(update.event); 
+                if(event.action === "chats.rights.onUpdate"){
+                    let permissions = event.data;
+                    let newPermissions = {}; 
+                    if(permissions){ 
+                        newPermissions.banSendDmMention = permissions.banSendDmMention;
+                        newPermissions.banSendKeyword = permissions.banSendKeyword;
+                        newPermissions.banSendQRcode = permissions.banSendQRcode;
+                        newPermissions.banSendWebLink = permissions.banSendWebLink;
+                        newPermissions.banWhisper = permissions.banWhisper;
+                        newPermissions.kickWhoSendKeyword = permissions.kickWhoSendKeyword;
+                        newPermissions.showKickMessage = permissions.showKickMessage;
+                        this.setState({permissions:newPermissions});
+                    }
+                
+                } 
+            }
+            default:
+                break;
+            }
      }
 
     render() {
         
  
         const { t } = this.props;
-        const { anchorEl,permissionsDialog,checkedPublic,permissions } = this.state; 
+        const { anchorEl,permissionsDialog,permissions ,chatPermissions} = this.state; 
         const chatId = AppStore.getChatId();
         const chat = ChatStore.get(chatId);
         if (!chat) return null;
 
-        const { is_blocked } = chat;
-
+        const { is_blocked } = chat; 
         const clearHistory = canClearHistory(chatId);
         const deleteChat = canDeleteChat(chatId);
         const deleteChatTitle = getDeleteChatTitle(chatId, t);
@@ -348,7 +442,7 @@ class MainMenuButton extends React.Component {
                             <div className="allCenter mgr_30">
                                 群成员禁言
                             </div>    
-                            <Switch  />
+                            <Switch key={!chatPermissions.can_send_messages} defaultChecked={!chatPermissions.can_send_messages} onChange={this.handleChangeCanSendMessage} />
                         </div>
                         <div className="left_right_align mgb_4"> 
                             <div className="allCenter mgr_30">
@@ -363,7 +457,7 @@ class MainMenuButton extends React.Component {
                             <div className="allCenter mgr_30">
                                 禁止发送媒体
                             </div>
-                            <Switch defaultChecked = {false}/>
+                            <Switch key={!chatPermissions.can_send_media_messages} defaultChecked={!chatPermissions.can_send_media_messages} onChange={this.handleChangeCanSendMedia}/>
                         </div>
                         <div className="left_right_align"> 
                             <div className="allCenter mgr_30">
@@ -414,7 +508,7 @@ class MainMenuButton extends React.Component {
                             <div className="allCenter mgr_30">
                                 群成员可邀请好友进群
                             </div>    
-                            <Switch  />
+                            <Switch key={chatPermissions.can_invite_users} defaultChecked={chatPermissions.can_invite_users} onChange={this.handleChangeCanInviteUsers}  />
                         </div> 
                         <div className="left_right_align"> 
                             <div className="allCenter mgr_30">
