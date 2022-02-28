@@ -37,16 +37,22 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import Button from '@material-ui/core/Button';
 import { modalManager } from '../../Utils/Modal'; 
 import Switch from '@material-ui/core/Switch';
-import Divider from '@material-ui/core/Divider';  
+import Divider from '@material-ui/core/Divider'; 
+import TextField from '@material-ui/core/TextField'; 
+ 
 import { isAdmin } from '../../Utils/Chat';  
 import { bool } from 'prop-types';
 import User from '../../Assets/Icons/User';
+import { hidden } from 'caniuse-lite/data/features';
 class MainMenuButton extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
           openDialogs: false,
           permissionsDialog:false, 
+          filterKeywordDialog:false,
+          filterKeyword:[],
+          defaultKeyword:'',
           admin:null,
           permissions:{
             banSendDmMention: false,
@@ -360,6 +366,9 @@ class MainMenuButton extends React.Component {
     componentDidMount() {  
         this.getBannedRightex();
         this.getChatPermissions();
+        const chatId = AppStore.getChatId();
+        let getAdmin = isAdmin(chatId);
+        this.setState({admin:getAdmin});
         TdLibController.on('update', this.onReceiveUpdateNewPermission);  
         
     }
@@ -392,20 +401,84 @@ class MainMenuButton extends React.Component {
                         newPermissions.kickWhoSendKeyword = permissions.kickWhoSendKeyword;
                         newPermissions.showKickMessage = permissions.showKickMessage;
                         this.setState({permissions:newPermissions});
-                    }
-                
+                    } 
                 } 
+                //监听敏感词发生变化时的推送
+                else if(event.action === "chats.keywords.onUpdate"){
+                    let keywords = event.data.keywords;
+                    this.setState({filterKeyword:keywords}) 
+                }
             }
             default:
                 break;
             }
+     }
+     //打开敏感词对话框 并获取敏感词
+     filterKeyword = () =>{
+        this.setState({filterKeywordDialog:true});
+        const chatId1 = AppStore.getChatId(); 
+        let chatId = this.fixChatId(chatId1); 
+
+        TdLibController.send({
+            '@type': 'sendCustomRequest',
+            "method": "chats.getFilterKeywords",
+            "parameters":JSON.stringify({"chatId": chatId})
+            })
+            .then(data => { 
+                let result = JSON.parse(data.result);
+                let keyword = result.data;
+                this.setState({filterKeyword:keyword});  
+            })
+            .catch(err => {   
+                console.log("err on get permissions");
+        });  
+     }
+     //关闭敏感词输入框   对话框
+     onClosefilterKeywordDialog = () =>{
+         this.setState({filterKeywordDialog:false});
+     }
+     //敏感词文本框的值发生变化时。
+     onChangeTextfiledValue = (event) => { 
+        this.setState({filterKeyword:event.target.value});
+     }
+
+     //保存敏感词
+     onSavefilterKeyword = () =>{
+        let {filterKeyword} = this.state;
+        const chatId1 = AppStore.getChatId(); 
+        let chatId = this.fixChatId(chatId1); 
+        let keywordArr = filterKeyword.split(",");
+        if(keywordArr[keywordArr.length-1] === ""){
+            keywordArr.pop();
+        } 
+        TdLibController.send({
+            '@type': 'sendCustomRequest',
+            "method": "chats.setFilterKeywords", 
+            "parameters":JSON.stringify({
+                "chatId": chatId,
+                "keywords":keywordArr, 
+            })  
+            })
+            .then(data => {   
+            })
+            .catch(err => {   
+                console.log("err on update SavefilterKeyword");
+        });  
      }
 
     render() {
         
  
         const { t } = this.props;
-        const { anchorEl,permissionsDialog,permissions ,chatPermissions} = this.state; 
+        const { 
+            anchorEl,
+            permissionsDialog,
+            permissions ,
+            chatPermissions,
+            admin,
+            filterKeyword,
+            filterKeywordDialog
+        } = this.state; 
         const chatId = AppStore.getChatId();
         const chat = ChatStore.get(chatId);
         if (!chat) return null;
@@ -418,6 +491,32 @@ class MainMenuButton extends React.Component {
         const switchBlocked = canSwitchBlocked(chatId); 
         return (
             <>
+            <Dialog
+                    manager={modalManager}
+                    transitionDuration={0}
+                    open={filterKeywordDialog}
+                    onClose={this.onClosefilterKeywordDialog}
+                    aria-labelledby='fatal-error-dialog-title'
+                    aria-describedby='fatal-error-dialog-description'>
+                    <DialogTitle id='fatal-error-dialog-title'>设置屏蔽敏感词</DialogTitle>
+                    <DialogContent> 
+                        <TextField 
+                            helperText="多个词之间用逗号分开"   
+                            rows={4}
+                            defaultValue={filterKeyword}
+                            multiline 
+                            onChange={this.onChangeTextfiledValue}
+                            variant="outlined" />
+                    </DialogContent>  
+                    <DialogActions> 
+                        <Button onClick={this.onSavefilterKeyword} color='primary' autoFocus>
+                            保存
+                        </Button>
+                        <Button onClick={this.onClosefilterKeywordDialog} color='primary'>
+                            关闭
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             <Dialog
                     manager={modalManager}
                     transitionDuration={0}
@@ -483,7 +582,7 @@ class MainMenuButton extends React.Component {
                                 屏蔽敏感词管理
                             </div>    
                             <div>
-                                <Button color="secondary">&gt;</Button>
+                                <Button onClick={this.filterKeyword} color="secondary">&gt;</Button>
                             </div>
                         </div>
                         <div className="left_right_align"> 
@@ -576,7 +675,7 @@ class MainMenuButton extends React.Component {
                         <ListItemText primary={getViewInfoTitle(chatId, t)} />
                     </MenuItem>
                     {/* TODO   管理群组 */}
-                    <MenuItem onClick={this.onOpenDialog}>
+                    <MenuItem style={{display:admin?'':'none'}} hidden={!admin} onClick={this.onOpenDialog}>
                         <ListItemIcon>
                             {isPrivateChat(chatId) ? <UserIcon /> : <GroupIcon />}
                         </ListItemIcon>
