@@ -79,10 +79,15 @@ class MainMenuButton extends React.Component {
         anchorEl: null
     };
 
-    handleButtonClick = async event => {
+    handleButtonClick = async event => { 
+       
         const { currentTarget: anchorEl } = event;
 
         const chatId = AppStore.getChatId();
+
+        let getAdmin = isAdmin(chatId);
+        this.setState({admin:getAdmin});
+
         const chat = await TdLibController.send({ '@type': 'getChat', chat_id: chatId });
         ChatStore.set(chat);
 
@@ -165,14 +170,10 @@ class MainMenuButton extends React.Component {
             })
             .then(data => { 
                 if(data){
-                    if(data.permissions){
-                        let newPermissions = {};
-                       
-                        // newPermissions.can_send_media_messages = data.permissions.can_send_media_messages;
-                        // newPermissions.can_send_messages = data.permissions.can_send_messages;
-                        // newPermissions.can_invite_users = data.permissions.can_invite_users; 
-                        this.setState({chatPermissions:data.permissions});
-                        // this.setState({chatPermissions:data.permissions}); 
+                    if(data.permissions){ 
+                        setTimeout(() => {
+                            this.setState({chatPermissions:data.permissions});  
+                        }, 50);
                     }
                 }
                
@@ -250,28 +251,28 @@ class MainMenuButton extends React.Component {
     //禁止发送媒体文件switch 发生变化
     handleChangeCanSendMedia = (event) => { 
         let checked = event.target.checked; 
-        this.UpdateChatPermissions('canSendMedia',checked);  
+        this.onUpdateChatPermissions('canSendMedia',checked);  
     };  
     //禁止发送信息switch 发生变化
     handleChangeCanSendMessage= (event) => { 
         let checked = event.target.checked; 
-        this.UpdateChatPermissions('canSendMessage',checked);  
+        this.onUpdateChatPermissions('canSendMessage',checked);  
     };  
     handleChangeCanInviteUsers = (event) => { 
         let checked = event.target.checked; 
-        this.UpdateChatPermissions('canInviteUsers',checked);  
+        this.onUpdateChatPermissions('canInviteUsers',checked);  
     };  
 
     //修改权限----是否禁言/是否能发送媒体/是否能邀请好友。
-    UpdateChatPermissions = (type,open) => {
+    onUpdateChatPermissions = (type,open) => {
         
         const {chatPermissions} = this.state;
         switch(type){
             case 'canSendMessage': 
-                chatPermissions.can_send_messages = open; 
+                chatPermissions.can_send_messages = !open; 
                 break;
             case 'canSendMedia':
-                chatPermissions.can_send_media_messages = open;
+                chatPermissions.can_send_media_messages = !open;
                 break;
             case 'canInviteUsers':
                 chatPermissions.can_invite_users = open;
@@ -366,11 +367,11 @@ class MainMenuButton extends React.Component {
     componentDidMount() {  
         this.getBannedRightex();
         this.getChatPermissions();
+        // this.onGetMuteMembers();
         const chatId = AppStore.getChatId();
         let getAdmin = isAdmin(chatId);
         this.setState({admin:getAdmin});
-        TdLibController.on('update', this.onReceiveUpdateNewPermission);  
-        
+        TdLibController.on('update', this.onReceiveUpdateNewPermission);   
     }
 
     componentWillUnmount() {  
@@ -467,6 +468,30 @@ class MainMenuButton extends React.Component {
         });  
      }
 
+     onGetMuteMembers = ()=>{
+        const chatId1 = AppStore.getChatId();
+        let isSuper = false;
+        if(chatId1 > 0){ 
+            isSuper = true;
+        }
+        let chatId = this.fixChatId(chatId1);
+        TdLibController.send({
+            '@type': 'getSupergroupMembers',
+            "chat_id": chatId, 
+            "limit":9999,
+            "filter": {
+                "@type": "supergroupMembersFilterRestricted",
+                },
+            })
+            .then(data => { 
+                debugger 
+            })
+            .catch(err => {   
+                debugger
+                console.log("err on get permissions");
+        });   
+     }
+
     render() {
         
  
@@ -490,6 +515,7 @@ class MainMenuButton extends React.Component {
         const deleteChatTitle = getDeleteChatTitle(chatId, t);
         const unpinMessage = hasOnePinnedMessage(chatId);
         const switchBlocked = canSwitchBlocked(chatId); 
+        
         return (
             <>
             <Dialog
