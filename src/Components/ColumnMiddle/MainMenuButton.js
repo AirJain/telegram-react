@@ -40,7 +40,7 @@ import Switch from '@material-ui/core/Switch';
 import Divider from '@material-ui/core/Divider'; 
 import TextField from '@material-ui/core/TextField'; 
  
-import { isAdmin } from '../../Utils/Chat';  
+import { isAdmin } from '../../Utils/Chat';   
 import { bool } from 'prop-types';
 import User from '../../Assets/Icons/User';
 import { hidden } from 'caniuse-lite/data/features';
@@ -89,8 +89,7 @@ class MainMenuButton extends React.Component {
         this.setState({admin:getAdmin});
 
         const chat = await TdLibController.send({ '@type': 'getChat', chat_id: chatId });
-        ChatStore.set(chat);
-
+        ChatStore.set(chat); 
         this.setState({ anchorEl });
     };
 
@@ -169,6 +168,7 @@ class MainMenuButton extends React.Component {
             "chat_id": chatId, 
             })
             .then(data => { 
+                
                 if(data){
                     if(data.permissions){ 
                         setTimeout(() => {
@@ -367,7 +367,7 @@ class MainMenuButton extends React.Component {
     componentDidMount() {  
         this.getBannedRightex();
         this.getChatPermissions();
-        // this.onGetMuteMembers();
+        this.onGetMuteMembers();
         const chatId = AppStore.getChatId();
         let getAdmin = isAdmin(chatId);
         this.setState({admin:getAdmin});
@@ -468,33 +468,62 @@ class MainMenuButton extends React.Component {
         });  
      }
 
-     onGetMuteMembers = ()=>{
-        const chatId1 = AppStore.getChatId();
-        let isSuper = false;
-        if(chatId1 > 0){ 
-            isSuper = true;
-        }
-        let chatId = this.fixChatId(chatId1);
-        TdLibController.send({
-            '@type': 'getSupergroupMembers',
-            "chat_id": chatId, 
-            "limit":9999,
-            "filter": {
-                "@type": "supergroupMembersFilterRestricted",
-                },
-            })
-            .then(data => { 
-                debugger 
-            })
-            .catch(err => {   
-                debugger
-                console.log("err on get permissions");
-        });   
+     onGetMuteMembers = () =>{ 
+        // ({"filter":{"@type":"supergroupMembersFilterRestricted"}
+        // ,"offset":0
+        // ,"@type":"getSupergroupMembers"
+        // ,"limit":200
+        // ,"supergroup_id":1073741825
+        // ,"@extra":72})
+       
+        // const result = TdLibController.send({
+        //     '@type': 'getUserFullInfo',
+        //     user_id: UserStore.get(UserStore.getMyId())
+        // })
+        // .then(data => { 
+        //     debugger
+        // })
+        // .catch(err => {   
+        //    debugger
+        //    console.log("err on get permissions");
+        // });   
+        
+        // TdLibController.send({
+        //     '@type': 'getChat',
+        //     "chat_id": chatId, 
+        //     })
+        //     .then(data => {  
+        //         if(data){
+        //             let chatId1 = this.fixChatId(chatId);  
+        //             TdLibController.send({
+        //                 '@type': 'getSupergroupMembers',
+        //                 "supergroup_id": chatId1, 
+        //                 "offset":0,
+        //                 "limit":200,
+        //                 // "@extra":72,
+        //                 "filter": {
+        //                     "@type": "supergroupMembersFilterRestricted",
+        //                     },
+        //                 })
+        //                 .then(data => { 
+        //                      debugger
+        //                 })
+        //                 .catch(err => {   
+        //                     debugger
+        //                     console.log("err on get permissions");
+        //             });   
+        //         }
+               
+        //     })
+        //     .catch(err => {   
+        //         console.log("err on get permissions");
+        // });   
+       
      }
 
     render() {
         
- 
+        
         const { t } = this.props;
         const { 
             anchorEl,

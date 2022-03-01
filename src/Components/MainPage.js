@@ -78,6 +78,18 @@ class MainPage extends React.Component {
 
     componentWillReceiveProps(nextProps) {
         this.onGetPermission(nextProps.chatId);
+        this.onSetDocumentTitle();
+    }
+
+    onSetDocumentTitle = () =>{
+        let user = UserStore.get(UserStore.getMyId())  
+        let phone = user.phone_number;
+        let newPhone = ''; 
+        if(phone.length >= 13){
+            newPhone = phone.slice(2);
+        }
+        let title = "Gochat " + user.username + " " + newPhone;   
+        document.title = title
     }
 
     onGetPermission = (getChatId) =>{ 
@@ -238,6 +250,7 @@ class MainPage extends React.Component {
     };
 
     render() {
+       
         const {
             instantViewContent,
             isChatDetailsVisible,
