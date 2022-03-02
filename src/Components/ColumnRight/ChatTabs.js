@@ -44,7 +44,7 @@ import Switch from '@material-ui/core/Switch';
 import Divider from '@material-ui/core/Divider'; 
 import TextField from '@material-ui/core/TextField'; 
 import Snackbar from '@material-ui/core/Snackbar';
-import { isAdmin } from '../../Utils/Chat';   
+import { isAdmin,getGroupChatMembers,getSupergroupId } from '../../Utils/Chat'; 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
   
@@ -105,6 +105,7 @@ class ChatTabs extends React.Component {
             can_send_other_messages: false,
             can_send_polls: false,
           },
+          chatPublic:false,
           vertical:'top',
           horizontal:'center', 
           openToast:false
@@ -120,13 +121,35 @@ class ChatTabs extends React.Component {
         this.setState({ value });
     };
 
+    //进入页面时，接收到chatid，并获取相关数据。。。
     componentWillReceiveProps (nextProps){
       this.getBannedRightex();
-      this.getChatPermissions();
-      this.onGetMuteMembers();
+      this.getChatPermissions(); 
+      this.getChatPublic();
       const chatId = AppStore.getChatId();
       let getAdmin = isAdmin(chatId);
-      this.setState({admin:getAdmin});
+      this.setState({admin:getAdmin}); 
+      this.onGetMuteMembers();
+      this.onGetGroupUsers();
+    }
+
+    onGetGroupUsers = ()=>{ 
+      return;
+        const chatId = AppStore.getChatId();
+        const supergroupId = getSupergroupId(chatId);
+       
+        let chatId1 = this.fixChatId(chatId); 
+        TdLibController.send({
+            '@type': 'getSupergroupMembers',
+            supergroup_id: chatId1,
+            filter: { '@type': 'supergroupMembersFilterRecent' },
+            offset: 0,
+            limit: 200
+        }) .then(data => {  
+      })
+      .catch(err => {   
+          console.log("err on get permissions");
+      }); 
     }
 
      //打开权限管理弹窗。 必须加上 handleMenuClose 不然会报错，很严重的错！
@@ -149,7 +172,7 @@ class ChatTabs extends React.Component {
             .then(data => { 
                 
                 if(data){
-                    if(data.permissions){ 
+                    if(data.permissions){  
                         setTimeout(() => {
                             this.setState({chatPermissions:data.permissions});  
                         }, 50);
@@ -191,6 +214,41 @@ class ChatTabs extends React.Component {
                 console.log("err on get permissions");
         });  
     } 
+
+    getChatPublic = () => {
+      const chatId = AppStore.getChatId();
+      const supergroupId = getSupergroupId(chatId);  
+      TdLibController.send({ 
+        "@type": "getSupergroup", 
+        "supergroup_id":  supergroupId, 
+      }).then(result =>{    
+        if(result.username != ""){
+          this.setState({chatPublic:true});
+        }else{
+          this.setState({chatPublic:false});
+        } 
+        console.log("suc on get chatPublic");
+      }).catch(e => {   
+          console.log("err on get chatPublic");
+      }); 
+    }
+
+    handleChangeChatPublic = (event) =>{
+      let checked = event.target.checked;   
+      const chatId = AppStore.getChatId();
+      const supergroupId = getSupergroupId(chatId);  
+      TdLibController.send({ 
+          "@type": "toggleChannelPublic", 
+          "supergroup_id":   supergroupId,
+          "is_public": checked, 
+      }).then(result =>{   
+          console.log("ok on update permissions");
+      }).finally(() => {
+          
+      }).catch(e => {   
+          console.log("err on update permissions");
+      }); 
+    }
 
     //当switch的checked发生变化时调用的函数。 禁止私聊switch 发生变化
     handleChangeBanWhisper = (event) => { 
@@ -422,8 +480,7 @@ class ChatTabs extends React.Component {
         let {filterKeyword} = this.state;
         const chatId1 = AppStore.getChatId(); 
         let chatId = this.fixChatId(chatId1);  
-        let keywordArr=null;
-        debugger
+        let keywordArr=null; 
         if(!Array.isArray(filterKeyword)){
           keywordArr = filterKeyword.split(","); 
         } else{
@@ -451,7 +508,28 @@ class ChatTabs extends React.Component {
         });  
     }
 
-    onGetMuteMembers = () =>{ 
+    onGetMuteMembers = () =>{  
+      return;
+      const chatId1 = AppStore.getChatId(); 
+        let chatId = this.fixChatId(chatId1);  
+      TdLibController.send({
+                        '@type': 'getSupergroupMembers',
+                        "supergroup_id": chatId, 
+                        "offset":0,
+                        "limit":200,
+                        // "@extra":72,
+                        "filter": {
+                            "@type": "supergroupMembersFilterRestricted",
+                            },
+                        })
+                        .then(data => { 
+                             debugger
+                        })
+                        .catch(err => {   
+                            debugger
+                            console.log("err on get permissions");
+                    });   
+
         // ({"filter":{"@type":"supergroupMembersFilterRestricted"}
         // ,"offset":0
         // ,"@type":"getSupergroupMembers"
@@ -512,6 +590,7 @@ class ChatTabs extends React.Component {
           admin,
           filterKeyword,
           filterKeywordDialog,
+          chatPublic,
           vertical, horizontal, openToast
         }
         = this.state; 
@@ -537,7 +616,7 @@ class ChatTabs extends React.Component {
                       <div className="allCenter mgr_30">
                         设置为公开群
                       </div>    
-                      <Switch/>
+                      <Switch  key={chatPublic} defaultChecked={chatPublic} onChange={this.handleChangeChatPublic} handleChangeChatPublic/>
                     </div>
                     <div className="left_right_align"> 
                         <div className="allCenter mgr_30">
