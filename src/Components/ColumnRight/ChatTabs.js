@@ -219,7 +219,7 @@ class ChatTabs extends React.Component {
     getChatPublic = () => { 
       const chatId = AppStore.getChatId();
       let userName = getChatUsername(chatId); 
-      if(username != ""){
+      if(userName != ""){
         this.setState({chatPublic:true});
       }else{
         this.setState({chatPublic:false});
