@@ -556,7 +556,7 @@ class ChatDetails extends React.Component {
                     <SharedMediaContent ref={this.mediaRef} chatId={chatId} popup={popup}/>
 
                     {!isUserChat && (
-                        <ChatTabs chatId={1234}></ChatTabs>
+                        <ChatTabs chatId={chatId}></ChatTabs>
                     )}
                     
                 </div>
