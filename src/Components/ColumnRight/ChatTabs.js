@@ -44,7 +44,7 @@ import Switch from '@material-ui/core/Switch';
 import Divider from '@material-ui/core/Divider'; 
 import TextField from '@material-ui/core/TextField'; 
 import Snackbar from '@material-ui/core/Snackbar';
-import { isAdmin,getGroupChatMembers,getSupergroupId } from '../../Utils/Chat'; 
+import { isAdmin,getGroupChatMembers,getSupergroupId,getChatUsername } from '../../Utils/Chat'; 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
   
@@ -215,22 +215,15 @@ class ChatTabs extends React.Component {
         });  
     } 
 
-    getChatPublic = () => {
+    //获取username，空则为私密群组，非空则为公开群组。
+    getChatPublic = () => { 
       const chatId = AppStore.getChatId();
-      const supergroupId = getSupergroupId(chatId);  
-      TdLibController.send({ 
-        "@type": "getSupergroup", 
-        "supergroup_id":  supergroupId, 
-      }).then(result =>{    
-        if(result.username != ""){
-          this.setState({chatPublic:true});
-        }else{
-          this.setState({chatPublic:false});
-        } 
-        console.log("suc on get chatPublic");
-      }).catch(e => {   
-          console.log("err on get chatPublic");
-      }); 
+      let userName = getChatUsername(chatId); 
+      if(username != ""){
+        this.setState({chatPublic:true});
+      }else{
+        this.setState({chatPublic:false});
+      }  
     }
 
     handleChangeChatPublic = (event) =>{
