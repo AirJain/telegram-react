@@ -574,6 +574,8 @@
   "EnterChannelName":"输入频道名称",
   "SharedFilesTab2":"文件",
   "SharedMediaTab2":"图片或截图",
+  "GroupMembers":"用户列表",
+  "SharedLinksTab2":"链接",
   "DescriptionInfo":"描述",
   "DescriptionOptionalPlaceholder":"频道说明",
   "GroupAddMembers":"添加组成员",
