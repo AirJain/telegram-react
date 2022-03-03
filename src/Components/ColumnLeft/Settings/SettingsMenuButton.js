@@ -42,7 +42,9 @@ class SettingsMenuButton extends React.Component {
         this.handleClose(); 
         TdLibController.logOut();
         TdLibController.send({ '@type': 'destroy' });
-        window.location.reload();
+        setTimeout(() => {
+            window.location.reload();
+        }, 500); 
     };
 
     handleClose = () => {

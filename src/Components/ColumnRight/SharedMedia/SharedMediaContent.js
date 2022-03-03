@@ -24,8 +24,10 @@ import MessageStore from '../../../Stores/MessageStore';
 import TdLibController from '../../../Controllers/TdLibController';
 import './SharedMediaContent.css';
 import Chat from '../../Tile/Chat';
-
-const overScanCount = 5;
+import ChatTabs from '../ChatTabs';
+import AppStore from '../../../Stores/ApplicationStore';
+import { isAdmin } from '../../../Utils/Chat';  
+const overScanCount = 5; 
 
 class SharedMediaContent extends React.Component {
     constructor(props) {
@@ -107,12 +109,11 @@ class SharedMediaContent extends React.Component {
         return undefined;
     }
 
-    static getItemTemplate = (selectedIndex, item, onOpen) => {
-        const migratedChatId = -1;
-
+    static getItemTemplate = (selectedIndex, item, onOpen) => { 
+        const migratedChatId = -1; 
         switch (selectedIndex) {
             case 0: {
-                const { user_id: id } = item;
+                const { user_id: id } = item; 
                 return (
                     <ListItem
                         button
@@ -836,9 +837,21 @@ class SharedMediaContent extends React.Component {
             voiceNote,
             groupsInCommon
         } = this.state;
+         //获取当前用户是否为admin ，是则显示权限，否则不显示权限。
+         const chatId = AppStore.getChatId();
+         let amAdmin = isAdmin(chatId);   
+         if(selectedIndex === 7 && amAdmin){
+             const chatId = AppStore.getChatId(); 
+             return (
+                 <ChatTabs chatId={chatId}></ChatTabs>
+             )
+         }
+         //切换是否为管理员时，可以会出现一个bug。
+        //  else if(selectedIndex === 7 && !amAdmin){
+        //     selectedIndex = 0;
+        //  }
 
-        // console.log('[vlist] render', [selectedIndex, items, renderIds]);
-
+        // console.log('[vlist] render', [selectedIndex, items, renderIds]); 
         const hasItems = members && members.length > 0
             || photoAndVideo && photoAndVideo.length > 0
             || document && document.length > 0
@@ -872,7 +885,7 @@ class SharedMediaContent extends React.Component {
                     {controls}
                 </div>
             );
-        }
+        } 
 
         return (
             <div ref={this.listRef} className={classNames('shared-media-content', { 'shared-photos-list': selectedIndex === 1 })}>

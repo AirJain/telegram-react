@@ -83,13 +83,15 @@ class MainPage extends React.Component {
 
     onSetDocumentTitle = () =>{
         let user = UserStore.get(UserStore.getMyId())  
-        let phone = user.phone_number;
-        let newPhone = ''; 
-        if(phone.length >= 13){
-            newPhone = phone.slice(2);
-        }
-        let title = "Gochat " + user.username + " " + newPhone;   
-        document.title = title
+        if(user){
+            let phone = user.phone_number;
+            let newPhone = ''; 
+            if(phone.length >= 13){
+                newPhone = phone.slice(2);
+            }
+            let title = "Gochat " + user.username + " " + newPhone;   
+            document.title = title
+        }  
     }
 
     onGetPermission = (getChatId) =>{ 

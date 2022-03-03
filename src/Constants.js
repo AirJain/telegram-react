@@ -104,6 +104,6 @@ export const VERBOSITY_MIN = 0;
 export const VOICENOTE_MIN_RECORD_DURATION = 1000;
 export const USERNAME_LENGTH_MIN = 5;
 export const REPLACE_PREFIX = '/telegram-react';
-export const WASM_FILE_NAME = 'e634d28dfd424fc3cbcab89e52109800.wasm';
+export const WASM_FILE_NAME = '212265149b2b551022d5471fd7588b96.wasm';
 export const WASM_FILE_HASH = WASM_FILE_NAME.replace('.wasm', '');
 export const BASE_URL= 'https://jk.gochat9.com/';

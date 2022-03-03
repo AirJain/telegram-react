@@ -14,7 +14,8 @@ import { clamp, throttle } from '../../../Utils/Common';
 import MessageStore from '../../../Stores/MessageStore';
 import TdLibController from '../../../Controllers/TdLibController';
 import './SharedMediaTabs.css';
-
+import AppStore from '../../../Stores/ApplicationStore';
+import { isAdmin } from '../../../Utils/Chat';  
 class SharedMediaTabs extends React.Component {
     constructor(props) {
         super(props);
@@ -23,7 +24,7 @@ class SharedMediaTabs extends React.Component {
         this.filtersRef = React.createRef();
         this.filterSelectionRef = React.createRef();
 
-        this.state = { }
+        this.state = { isCurUserAdmin:false }
 
         this.onWindowResize = throttle(this.onWindowResize, 250);
     }
@@ -93,6 +94,7 @@ class SharedMediaTabs extends React.Component {
     }
 
     componentWillUnmount() {
+        debugger
         this.unobserveResize();
         MessageStore.off('clientUpdateMediaTab', this.onClientUpdateMediaTab);
         MessageStore.off('clientUpdateChatMedia', this.onClientUpdateChatMedia);
@@ -101,7 +103,12 @@ class SharedMediaTabs extends React.Component {
         MessageStore.off('updateMessageContent', this.onUpdateMessageContent);
     }
 
-    onUpdateMessageContent = update => {
+     //进入页面时，接收到chatid，并获取相关数据。。。
+    componentWillReceiveProps (nextProps){
+       
+    } 
+
+    onUpdateMessageContent = update => { 
         const { chatId } = this.props;
         const { selectedIndex } = this.state;
         const { chat_id } = update;
@@ -244,8 +251,7 @@ class SharedMediaTabs extends React.Component {
 
     onClientUpdateMediaTab = update => {
         const { chatId, index } = update;
-        if (chatId !== this.props.chatId) return;
-
+        if (chatId !== this.props.chatId) return; 
         this.setState({
             selectedIndex: index
         }, () => {
@@ -263,9 +269,15 @@ class SharedMediaTabs extends React.Component {
 
         let item = null;
         let left = 0;
-        const membersFilter = this.filterRef.get('members');
+        const membersFilter = this.filterRef.get('members');  
         if (selectedIndex === 0 && membersFilter) {
             item = membersFilter.firstChild;
+            left = item.offsetLeft;
+        } 
+        
+        const permissionsFilter = this.filterRef.get('permissions');
+        if (selectedIndex === 7 && permissionsFilter) {
+            item = permissionsFilter.firstChild;
             left = item.offsetLeft;
         }
 
@@ -354,8 +366,10 @@ class SharedMediaTabs extends React.Component {
 
     render() {
         const { t } = this.props;
-        const { selectedIndex, members, photoAndVideo, document, audio, url, voiceNote, groupsInCommon } = this.state;
-
+        const { selectedIndex, members, photoAndVideo, document, audio, url, voiceNote, groupsInCommon,isCurUserAdmin } = this.state;
+        //获取当前用户是否为admin 
+        const chatId = AppStore.getChatId();
+        let amAdmin = isAdmin(chatId);    
         const tabsCount =
             (members.length > 0 ? 1 : 0) +
             (photoAndVideo.length > 0 ? 1 : 0) +
@@ -390,6 +404,14 @@ class SharedMediaTabs extends React.Component {
                             onMouseDown={e => this.handleFilterClick(e, 0)}>
                             <span>{t('GroupMembers')}</span>
                         </div>
+                    )} 
+                    {amAdmin && (
+                        <div
+                            ref={r => this.filterRef.set('permissions', r)}
+                            className={classNames('filter', {'shared-media-tab': tabsCount > 1}, { 'item-selected': selectedIndex === 7})}
+                            onMouseDown={e => this.handleFilterClick(e, 7)}>
+                            <span>权限管理</span> 
+                        </div> 
                     )}
                     {photoAndVideo.length > 0 && (
                         <div

@@ -33,6 +33,8 @@ import AppStore from '../../Stores/ApplicationStore';
 import ChatStore from '../../Stores/ChatStore';
 import MessageStore from '../../Stores/MessageStore';
 import TdLibController from '../../Controllers/TdLibController'; 
+import ListItem from '@material-ui/core/ListItem';
+import List from '@material-ui/core/List';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -44,6 +46,7 @@ import Switch from '@material-ui/core/Switch';
 import Divider from '@material-ui/core/Divider'; 
 import TextField from '@material-ui/core/TextField'; 
 import Snackbar from '@material-ui/core/Snackbar';
+import User from '../Tile/User';
 import { isAdmin,getGroupChatMembers,getSupergroupId,getChatUsername } from '../../Utils/Chat'; 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -108,7 +111,9 @@ class ChatTabs extends React.Component {
           chatPublic:false,
           vertical:'top',
           horizontal:'center', 
-          openToast:false
+          openToast:false,
+          muteMembers:[],
+          muteMembersDialog:false
     };
 
     handleOpenToast = () =>{
@@ -128,29 +133,8 @@ class ChatTabs extends React.Component {
       this.getChatPublic();
       const chatId = AppStore.getChatId();
       let getAdmin = isAdmin(chatId);
-      this.setState({admin:getAdmin}); 
-      this.onGetMuteMembers();
-      this.onGetGroupUsers();
-    }
-
-    onGetGroupUsers = ()=>{ 
-      return;
-        const chatId = AppStore.getChatId();
-        const supergroupId = getSupergroupId(chatId);
-       
-        let chatId1 = this.fixChatId(chatId); 
-        TdLibController.send({
-            '@type': 'getSupergroupMembers',
-            supergroup_id: chatId1,
-            filter: { '@type': 'supergroupMembersFilterRecent' },
-            offset: 0,
-            limit: 200
-        }) .then(data => {  
-      })
-      .catch(err => {   
-          console.log("err on get permissions");
-      }); 
-    }
+      this.setState({admin:getAdmin});  
+    } 
 
      //打开权限管理弹窗。 必须加上 handleMenuClose 不然会报错，很严重的错！
     onOpenDialog = ()=>{ 
@@ -501,78 +485,35 @@ class ChatTabs extends React.Component {
         });  
     }
 
-    onGetMuteMembers = () =>{  
-      return;
-      const chatId1 = AppStore.getChatId(); 
-        let chatId = this.fixChatId(chatId1);  
+    
+    onGetMuteMembers = () =>{     
+      let {chatId} = this.props;
+      const supergroupId = getSupergroupId(chatId);  
       TdLibController.send({
-                        '@type': 'getSupergroupMembers',
-                        "supergroup_id": chatId, 
-                        "offset":0,
-                        "limit":200,
-                        // "@extra":72,
-                        "filter": {
-                            "@type": "supergroupMembersFilterRestricted",
-                            },
-                        })
-                        .then(data => { 
-                             debugger
-                        })
-                        .catch(err => {   
-                            debugger
-                            console.log("err on get permissions");
-                    });   
+        '@type': 'getSupergroupMembers',
+        "supergroup_id": supergroupId, 
+        "offset":0,
+        "limit":200,
+        // "@extra":72,
+        "filter": {
+        "@type": "supergroupMembersFilterRestricted",
+        },
+        }).then(data => { 
+          this.setState({muteMembers:data.members}) 
+          this.onOpenMuteMembersDialog();
 
-        // ({"filter":{"@type":"supergroupMembersFilterRestricted"}
-        // ,"offset":0
-        // ,"@type":"getSupergroupMembers"
-        // ,"limit":200
-        // ,"supergroup_id":1073741825
-        // ,"@extra":72})
-      
-        // const result = TdLibController.send({
-        //     '@type': 'getUserFullInfo',
-        //     user_id: UserStore.get(UserStore.getMyId())
-        // })
-        // .then(data => { 
-        //     debugger
-        // })
-        // .catch(err => {   
-        //    debugger
-        //    console.log("err on get permissions");
-        // });   
-        
-        // TdLibController.send({
-        //     '@type': 'getChat',
-        //     "chat_id": chatId, 
-        //     })
-        //     .then(data => {  
-        //         if(data){
-        //             let chatId1 = this.fixChatId(chatId);  
-        //             TdLibController.send({
-        //                 '@type': 'getSupergroupMembers',
-        //                 "supergroup_id": chatId1, 
-        //                 "offset":0,
-        //                 "limit":200,
-        //                 // "@extra":72,
-        //                 "filter": {
-        //                     "@type": "supergroupMembersFilterRestricted",
-        //                     },
-        //                 })
-        //                 .then(data => { 
-        //                      debugger
-        //                 })
-        //                 .catch(err => {   
-        //                     debugger
-        //                     console.log("err on get permissions");
-        //             });   
-        //         }
-              
-        //     })
-        //     .catch(err => {   
-        //         console.log("err on get permissions");
-        // });   
-      
+        }).catch(err => {   
+          this.onOpenMuteMembersDialog(); 
+          console.log("err on get permissions");
+        });     
+    }
+
+    onOpenMuteMembersDialog = ()=>{
+      this.setState({muteMembersDialog:true});
+    }
+
+    onCloseMuteMembersDialog = ()=>{
+      this.setState({muteMembersDialog:false});
     }
 
     render() {
@@ -583,27 +524,17 @@ class ChatTabs extends React.Component {
           admin,
           filterKeyword,
           filterKeywordDialog,
+          muteMembersDialog,
+          muteMembers,
           chatPublic,
           vertical, horizontal, openToast
         }
         = this.state; 
+         
+
         return (
-            <> 
-                <Tabs
-                    value={value}
-                    onChange={this.handleChange}
-                    indicatorColor='primary'
-                    textColor='primary'
-                    scrollable
-                    scrollButtons='off'
-                    fullWidth>
-                    <Tab label='成员列表' style={{ minWidth: '40px' }} />
-                    <Tab label='权限管理' style={{ minWidth: '40px' }} /> 
-                </Tabs>
-                <TabPanel value={value} index={0}>
-                        成员列表
-                </TabPanel>
-                <TabPanel value={value} index={1}>
+            <>  
+                
                   <div style={{padding:'15px'}}>
                     <div className="left_right_align"> 
                       <div className="allCenter mgr_30">
@@ -622,7 +553,7 @@ class ChatTabs extends React.Component {
                         被禁言成员列表
                       </div>    
                       <div>
-                        <Button color="secondary">&gt;</Button>
+                        <Button onClick={this.onGetMuteMembers} color="secondary">&gt;</Button>
                       </div>
                     </div>
                     <Divider />
@@ -689,8 +620,7 @@ class ChatTabs extends React.Component {
                         </div>    
                       <Switch key={permissions.banWhisper} defaultChecked={permissions.banWhisper} onChange={this.handleChangeBanWhisper}/>
                     </div> 
-                  </div>
-                </TabPanel> 
+                  </div> 
                 <Dialog
                     manager={modalManager}
                     transitionDuration={0}
@@ -713,6 +643,34 @@ class ChatTabs extends React.Component {
                             保存
                         </Button>
                         <Button onClick={this.onClosefilterKeywordDialog} color='primary'>
+                            关闭
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                <Dialog
+                    manager={modalManager}
+                    transitionDuration={0}
+                    open={muteMembersDialog}
+                    onClose={this.onCloseMuteMembersDialog}
+                    aria-labelledby='fatal-error-dialog-title'
+                    aria-describedby='fatal-error-dialog-description'>
+                    <DialogTitle id='fatal-error-dialog-title'>被禁言成员</DialogTitle>
+                    <DialogContent> 
+                      {muteMembers.length <=0 && (
+                          <span>暂无被禁言成员</span>
+                      )} 
+                      <List> 
+                          {muteMembers.map(function(d, idx){ 
+                            return (
+                            <ListItem key={idx}>
+                              <User userId={d.user_id}/>
+                            </ListItem>)
+                          })} 
+                      </List>
+                    </DialogContent>  
+                    <DialogActions>  
+                        <Button onClick={this.onCloseMuteMembersDialog} color='primary'>
                             关闭
                         </Button>
                     </DialogActions>

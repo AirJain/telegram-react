@@ -76,8 +76,7 @@ class ChatDetails extends React.Component {
 
         this.members = new Map();
         this.state = {
-            prevChatId: chatId,
-            isUserChat:false
+            prevChatId: chatId, 
         };
     }
 
@@ -149,21 +148,21 @@ class ChatDetails extends React.Component {
     componentDidMount() {
         this.loadContent();
         const { chatId } = this.props; 
-        TdLibController.send({
-            '@type': 'getChat',
-            "chat_id": chatId, 
-            })
-            .then(data => {  
-                if(data){ 
-                   if(data.type.user_id){
-                       this.setState({isUserChat:true});
-                   }
-                }
+        // TdLibController.send({
+        //     '@type': 'getChat',
+        //     "chat_id": chatId, 
+        //     })
+        //     .then(data => {  
+        //         if(data){ 
+        //            if(data.type.user_id){
+        //                this.setState({isUserChat:true});
+        //            }
+        //         }
                
-            })
-            .catch(err => {   
-                console.log("err on get permissions");
-        });   
+        //     })
+        //     .catch(err => {   
+        //         console.log("err on get permissions");
+        // });   
         UserStore.on('updateUserStatus', this.onUpdateUserStatus);
         UserStore.on('updateUserFullInfo', this.onUpdateUserFullInfo);
         BasicGroupStore.on('updateBasicGroupFullInfo', this.onUpdateBasicGroupFullInfo);
@@ -384,7 +383,7 @@ class ChatDetails extends React.Component {
             t,
             
         } = this.props; 
-        let {isUserChat} = this.state;
+        // let {isUserChat} = this.state;
        
 
         let { counters, migratedCounters } = this.props;
@@ -555,9 +554,9 @@ class ChatDetails extends React.Component {
                     <SharedMediaTabs chatId={chatId} onClick={this.handleTabClick}/>
                     <SharedMediaContent ref={this.mediaRef} chatId={chatId} popup={popup}/>
 
-                    {!isUserChat && (
+                    {/* {!isUserChat && (
                         <ChatTabs chatId={chatId}></ChatTabs>
-                    )}
+                    )} */}
                     
                 </div>
             </>
