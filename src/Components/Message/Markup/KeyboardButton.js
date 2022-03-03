@@ -30,6 +30,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Button from '@material-ui/core/Button';
 import { modalManager } from '../../../Utils/Modal'; 
+import { openChat } from '../../../Actions/Client';
 class KeyboardButton extends React.Component {
     state = {
         loading: false,
@@ -307,6 +308,7 @@ class KeyboardButton extends React.Component {
 
 
     onOpenDialog = () =>{
+        debugger;
         this.setState({ joinDialog: true });
     }
     onCloseDialog = () =>{
@@ -314,14 +316,17 @@ class KeyboardButton extends React.Component {
     }
     
     onConfirmJoin = () =>{
-         
+            debugger
             const {groupCode} = this.state;
             if(groupCode){
                 TdLibController.send({
                     '@type': 'joinChatByInviteLink',
                     invite_link: groupCode, 
                 }).then(result =>{
-                     
+                     const chatId = result.id;
+                     //加入群聊后打开群聊
+                     openChat(chatId);
+                    
                 }).finally(data => {
                      this.onCloseDialog();
                 }).catch(e => {
