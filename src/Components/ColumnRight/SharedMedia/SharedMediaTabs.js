@@ -93,8 +93,7 @@ class SharedMediaTabs extends React.Component {
         this.observeResize();
     }
 
-    componentWillUnmount() {
-        debugger
+    componentWillUnmount() { 
         this.unobserveResize();
         MessageStore.off('clientUpdateMediaTab', this.onClientUpdateMediaTab);
         MessageStore.off('clientUpdateChatMedia', this.onClientUpdateChatMedia);

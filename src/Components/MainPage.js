@@ -90,7 +90,7 @@ class MainPage extends React.Component {
             //     newPhone = phone.slice(2);
             // } 
             let title = "Gochat Web " + user.first_name + " " + user.last_name;   
-            document.title = title 
+            document.title = title; 
         }  
     }
 

@@ -307,16 +307,14 @@ class KeyboardButton extends React.Component {
     }
 
 
-    onOpenDialog = () =>{
-        debugger;
+    onOpenDialog = () =>{ 
         this.setState({ joinDialog: true });
     }
     onCloseDialog = () =>{
         this.setState({ joinDialog: false });
     }
     
-    onConfirmJoin = () =>{
-            debugger
+    onConfirmJoin = () =>{ 
             const {groupCode} = this.state;
             if(groupCode){
                 TdLibController.send({
