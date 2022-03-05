@@ -13,7 +13,9 @@ import UserStore from '../../Stores/UserStore';
 import BasicGroupStore from '../../Stores/BasicGroupStore';
 import SupergroupStore from '../../Stores/SupergroupStore';
 import './DialogStatus.css';
-
+import TdLibController from '../../Controllers/TdLibController';
+import AppStore from '../../Stores/ApplicationStore';
+import {isPrivateChat } from '../../Utils/Chat';
 class DialogStatus extends React.Component {
     constructor(props) {
         super(props);
@@ -23,7 +25,8 @@ class DialogStatus extends React.Component {
         this.state = {
             prevChatId: chatId,
             subtitle: getChatSubtitleWithoutTyping(chatId),
-            isAccent: isAccentChatSubtitleWithoutTyping(chatId)
+            isAccent: isAccentChatSubtitleWithoutTyping(chatId),
+            online_member_count:0,
         };
     }
 
@@ -67,6 +70,7 @@ class DialogStatus extends React.Component {
         UserStore.on('updateUserFullInfo', this.onUpdateUserFullInfo);
         BasicGroupStore.on('updateBasicGroupFullInfo', this.onUpdateBasicGroupFullInfo);
         SupergroupStore.on('updateSupergroupFullInfo', this.onUpdateSupergroupFullInfo);
+        TdLibController.on('update', this.onReceiveUpdateNewPermission);
     }
 
     componentWillUnmount() {
@@ -76,7 +80,24 @@ class DialogStatus extends React.Component {
         UserStore.off('updateUserFullInfo', this.onUpdateUserFullInfo);
         BasicGroupStore.off('updateBasicGroupFullInfo', this.onUpdateBasicGroupFullInfo);
         SupergroupStore.off('updateSupergroupFullInfo', this.onUpdateSupergroupFullInfo);
+        TdLibController.off('update', this.onReceiveUpdateNewPermission); 
     }
+
+     //从服务器端接收  权限更新的推送。
+     onReceiveUpdateNewPermission = update => {   
+        switch (update['@type']) {
+            case 'updateChatPermissions':
+               
+                break;
+            case'updateNewCustomEvent': 
+                break 
+            case 'updateChatOnlineMemberCount': 
+                this.setState({online_member_count:update.online_member_count});
+                break;
+            default:
+                break;
+            }
+     }
 
     onUpdateUserStatus = update => {
         const { chatId } = this.props;
@@ -196,12 +217,24 @@ class DialogStatus extends React.Component {
 
     render() {
         const { subtitle: externalSubtitle } = this.props;
-        const { subtitle, isAccent } = this.state;
-
+        const { subtitle, isAccent ,online_member_count} = this.state;
+        const chatId = AppStore.getChatId();  
+        let isPrivateChat00 = false; 
+        if (isPrivateChat(chatId)) {
+            isPrivateChat00 = true;
+        }
+        let text = "";
+        if(isPrivateChat00){
+            text = subtitle;
+        }else{
+            text = online_member_count + "人在线";
+        }
         return (
             <div className={classNames('dialog-status', { 'dialog-status-accent': isAccent })}>
+                 
                 {externalSubtitle ? externalSubtitle + ', ' : null}
-                {subtitle}
+                {text}
+                {/* {online_member_count}人在线 */}
             </div>
         );
     }

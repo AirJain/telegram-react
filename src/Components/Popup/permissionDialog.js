@@ -65,8 +65,7 @@ class permissionsDialog extends React.Component {
   
 
     render() {
-        const { open} = this.props; 
-        debugger;
+        const { open} = this.props;  
         if (!open) return null;
        
         return (
