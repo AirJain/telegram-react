@@ -29,13 +29,17 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Button from '@material-ui/core/Button';
-import { modalManager } from '../../../Utils/Modal'; 
+import { modalManager } from '../../../Utils/Modal';
 import { openChat } from '../../../Actions/Client';
+import AppStore from '../../../Stores/ApplicationStore';
+import { getSupergroupId } from '../../../Utils/Chat';
 class KeyboardButton extends React.Component {
     state = {
         loading: false,
-        joinDialog:false,
-        groupCode:null
+        joinDialog: false,
+        groupCode: null,
+        joinChatId: null,
+        meInGroup: false
     }
 
     handleCallbackQueryAnswer = (type, result, message) => {
@@ -91,7 +95,7 @@ class KeyboardButton extends React.Component {
         event.preventDefault();
         event.stopPropagation();
 
-        const { chatId, messageId, type } = this.props; 
+        const { chatId, messageId, type } = this.props;
         switch (type['@type']) {
             case 'inlineKeyboardButtonTypeBuy': {
                 showAlert({
@@ -237,7 +241,7 @@ class KeyboardButton extends React.Component {
 
                 const inline = `@${user.username} ${query}`;
 
-                if (in_current_chat){
+                if (in_current_chat) {
                     setText(inline);
                 } else {
                     openChatSelect({ switchInline: inline });
@@ -247,34 +251,8 @@ class KeyboardButton extends React.Component {
             }
             case 'inlineKeyboardButtonTypeUrl': {
                 /// qwerty_bot
-                // const { url } = type;
-                const url00 = type.url;
-                let result = null;
-                let groupCode = null;
-                let splitUrl = url00.split('=');
-                let isGroup = false;
-                if(splitUrl[1]){ 
-
-                    groupCode ="t.me/joinchat/" + splitUrl[1]; 
-                    result = await TdLibController.send({
-                        '@type': 'checkChatInviteLink',
-                        invite_link: groupCode, 
-                    }).then(result =>{
-                        isGroup = true;
-                        this.setState({groupCode:groupCode});
-                    }).finally(data => {
-                        if(isGroup){ 
-                            this.onOpenDialog(); 
-                       }else{
-                            showOpenUrlAlert(url00, { punycode: false, ask: true, tryTelegraph: true });
-                       } 
-                    }).catch(e => {
-                        isGroup = false;
-                    }); 
-                }  
-
-              
-                
+                // const { url } = type;  
+                this.onPrepareJoin(type.url); 
                 break;
             }
         }
@@ -293,55 +271,132 @@ class KeyboardButton extends React.Component {
                 return null;
             }
             case 'inlineKeyboardButtonTypeLoginUrl': {
-                return <ArrowTopRightIcon className='keyboard-button-icon'/>
+                return <ArrowTopRightIcon className='keyboard-button-icon' />
             }
             case 'inlineKeyboardButtonTypeSwitchInline': {
                 const { in_current_chat } = type;
 
-                return !in_current_chat && <ShareFilledIcon className='keyboard-button-icon'/>;
+                return !in_current_chat && <ShareFilledIcon className='keyboard-button-icon' />;
             }
             case 'inlineKeyboardButtonTypeUrl': {
-                return <ArrowTopRightIcon className='keyboard-button-icon'/>
+                return <ArrowTopRightIcon className='keyboard-button-icon' />
             }
         }
     }
+    //准备加入群聊
+    onPrepareJoin = (url) =>{
+        const url00 = url;
+        let result = null;
+        let groupCode = null;
+        let splitUrl = url00.split('=');
+        let isGroup = false;
+        if (splitUrl[1]) {
+            groupCode = "t.me/joinchat/" + splitUrl[1];
+            result = TdLibController.send({
+                '@type': 'checkChatInviteLink',
+                invite_link: groupCode,
+            }).then(result => {
+                isGroup = true; 
+                this.setState({ groupCode: groupCode});  
+                this.checkMeInGroup(result.chat_id,isGroup,url00);
+            }).finally(data => {
+                
+            }).catch(e => {
+                isGroup = false;
+            });
+        }
+
+    }
+    //判断本账号是否在该群聊中
+    checkMeInGroup = (joinChatId,isGroup,url00) => { 
+        let uid = UserStore.getMyId(); 
+        const supergroupId = getSupergroupId(joinChatId);
+        this.setState({joinChatId:joinChatId}); 
+        //获取到的链接里的id为0的话 即自己不在该群聊
+        if(joinChatId === 0) {
+            //不在群聊则判断该链接是否是群组，是的话则弹出是否加入群聊对话框，不是的话则弹出打开网页链接对话框
+            if (isGroup) {
+                this.onOpenDialog();
+            } else {
+                showOpenUrlAlert(url00, { punycode: false, ask: true, tryTelegraph: true });
+            } 
+        }else{
+            TdLibController.send({
+                '@type': 'getSupergroupMembers',
+                "supergroup_id": supergroupId,
+                "offset": 0,
+                "limit": 20000,
+            }).then(data => {
+                let isFind = false;
+                for (var i = 0; i < data.members.length; i++) {
+                    let member = data.members[i];
+                    if (member.user_id === uid) {
+                        isFind = true; 
+                    }
+                }
+                if (isFind == true) {
+                    //在群聊中则打开进入群聊对话框
+                    this.onOpenMeInGroupDialog();
+                } 
+                    
+            }).catch(err => { 
+            });
+        }
+        
+    }
 
 
-    onOpenDialog = () =>{ 
+    onOpenDialog = () => {
         this.setState({ joinDialog: true });
     }
-    onCloseDialog = () =>{
+    onCloseDialog = () => {
         this.setState({ joinDialog: false });
     }
-    
-    onConfirmJoin = () =>{ 
-            const {groupCode} = this.state;
-            if(groupCode){
-                TdLibController.send({
-                    '@type': 'joinChatByInviteLink',
-                    invite_link: groupCode, 
-                }).then(result =>{
-                     const chatId = result.id;
-                     //加入群聊后打开群聊
-                     openChat(chatId);
-                    
-                }).finally(data => {
-                     this.onCloseDialog();
-                }).catch(e => {
-                     
-                }); 
-            }
-         
-       
+
+    onOpenMeInGroupDialog = () => {
+        this.setState({ meInGroup: true });
+    }
+    onCloseMeInGroupDialog = () => {
+        this.setState({ meInGroup: false });
+    }
+    //打开群聊
+    onOpenChat = (chatId) =>{
+        // openChat(chatId); 
+        openChat(chatId, null, false);
+    } 
+    //确定打开群聊
+    onConfirmOpen = () =>{
+        const {joinChatId} = this.state; 
+        this.onCloseMeInGroupDialog();
+        this.onOpenChat(joinChatId);
+    }
+    //确定加入群聊
+    onConfirmJoin = () => {
+        const { groupCode } = this.state;
+        if (groupCode) {
+            TdLibController.send({
+                '@type': 'joinChatByInviteLink',
+                invite_link: groupCode,
+            }).then(result => {
+                const chatId = result.id;
+                //加入群聊后打开群聊
+                this.onOpenChat(chatId);
+            }).finally(data => {
+                this.onCloseDialog();
+            }).catch(e => {
+
+            });
+        }
     }
 
+   
     render() {
         const { text, type } = this.props;
-        const { loading ,joinDialog} = this.state; 
-        const icon = this.getIcon(type); 
+        const { loading, joinDialog } = this.state;
+        const icon = this.getIcon(type);
         return (
             <>
-                 <Dialog
+                <Dialog
                     manager={modalManager}
                     transitionDuration={0}
                     open={joinDialog}
@@ -349,12 +404,12 @@ class KeyboardButton extends React.Component {
                     aria-labelledby='fatal-error-dialog-title'
                     aria-describedby='fatal-error-dialog-description'>
                     <DialogTitle id='fatal-error-dialog-title'>提示</DialogTitle>
-                    <DialogContent> 
+                    <DialogContent>
                         <DialogContentText>
                             您确定要加入该群组吗？
                         </DialogContentText>
-                    </DialogContent>  
-                    <DialogActions> 
+                    </DialogContent>
+                    <DialogActions>
                         <Button onClick={this.onConfirmJoin} color='primary' autoFocus>
                             确定
                         </Button>
@@ -363,6 +418,29 @@ class KeyboardButton extends React.Component {
                         </Button>
                     </DialogActions>
                 </Dialog>
+                <Dialog
+                    manager={modalManager}
+                    transitionDuration={0}
+                    open={this.state.meInGroup}
+                    onClose={this.onCloseMeInGroupDialog}
+                    aria-labelledby='fatal-error-dialog-title'
+                    aria-describedby='fatal-error-dialog-description'>
+                    <DialogTitle id='fatal-error-dialog-title'>提示</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            您已经在该群聊中，要打开该群聊吗？
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={this.onConfirmOpen} color='primary' autoFocus>
+                            确定
+                        </Button>
+                        <Button onClick={this.onCloseMeInGroupDialog} color='primary' autoFocus>
+                            关闭
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+                
                 <ListItem className='keyboard-button' button onClick={this.handleClick}>
                     {text}
                     {icon}
@@ -373,7 +451,7 @@ class KeyboardButton extends React.Component {
                         />
                     )}
                 </ListItem>
-            </> 
+            </>
         );
     }
 

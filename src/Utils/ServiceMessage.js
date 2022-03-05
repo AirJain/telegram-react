@@ -246,7 +246,7 @@ export function getServiceMessageContent(message, openUser = false) {
 
                     if (isSupergroup(chat_id) && !isChannel) {
                         if (isMeUser(memberUserId)) {
-                            return LStore.getString('ChannelMegaJoined');
+                            return userName + " 加入了群组";
                         }
                         newText = userName + " 加入了群组";
                         return LStore.replace(newText, 'un1', <MessageAuthor key='un1' sender={sender} openUser={openUser} />);

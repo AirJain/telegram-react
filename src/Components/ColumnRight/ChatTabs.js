@@ -6,32 +6,10 @@
  */
 
 import React from 'react';
-import PropTypes from 'prop-types';
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';   
+import PropTypes from 'prop-types'; 
 import Typography from '@material-ui/core/Typography';
-import Box from '@material-ui/core/Box'; 
-import { withTranslation } from 'react-i18next';
-import IconButton from '@material-ui/core/IconButton';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import AddMemberIcon from '../../Assets/Icons/AddMember';
-import BroomIcon from '../../Assets/Icons/Broom';
-import DeleteIcon from '../../Assets/Icons/Delete';
-import MoreVertIcon from '../../Assets/Icons/More';
-import RemoveMemberIcon from '../../Assets/Icons/RemoveMember';
-import UnpinIcon from '../../Assets/Icons/PinOff';
-import UserIcon from '../../Assets/Icons/User';
-import GroupIcon from '../../Assets/Icons/Group';
-import { requestUnpinMessage } from '../../Actions/Client';
-import { clearHistory, leaveChat } from '../../Actions/Chat';
-import { canClearHistory, canDeleteChat, getViewInfoTitle, isPrivateChat, getDeleteChatTitle, hasOnePinnedMessage, canSwitchBlocked, getChatSender } from '../../Utils/Chat';
-import { requestBlockSender, unblockSender } from '../../Actions/Message';
-import AppStore from '../../Stores/ApplicationStore';
-import ChatStore from '../../Stores/ChatStore';
-import MessageStore from '../../Stores/MessageStore';
+import Box from '@material-ui/core/Box';  
+import AppStore from '../../Stores/ApplicationStore'; 
 import TdLibController from '../../Controllers/TdLibController'; 
 import ListItem from '@material-ui/core/ListItem';
 import List from '@material-ui/core/List';
@@ -127,13 +105,13 @@ class ChatTabs extends React.Component {
     };
 
     //进入页面时，接收到chatid，并获取相关数据。。。
-    componentWillReceiveProps (nextProps){
+    componentWillReceiveProps (nextProps){ 
       this.getBannedRightex();
       this.getChatPermissions(); 
       this.getChatPublic();
       const chatId = AppStore.getChatId();
       let getAdmin = isAdmin(chatId);
-      this.setState({admin:getAdmin});  
+      this.setState({admin:getAdmin});   
     } 
 
      //打开权限管理弹窗。 必须加上 handleMenuClose 不然会报错，很严重的错！

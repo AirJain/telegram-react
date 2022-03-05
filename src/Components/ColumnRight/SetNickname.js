@@ -21,12 +21,21 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Button from '@material-ui/core/Button';
 import { modalManager } from '../../Utils/Modal'; 
+import TextField from '@material-ui/core/TextField'; 
+import UserStore from '../../Stores/UserStore';
+import PropTypes from 'prop-types';
+import TdLibController from '../../Controllers/TdLibController'; 
+import { getSupergroupId } from '../../Utils/Chat'; 
+import AppStore from '../../Stores/ApplicationStore'; 
 class SetNickname extends Notifications {
     constructor(props) {
         super(props); 
         this.state = { 
             nicknameDialog:false,
-            nikename:"",
+            nickname:"", 
+            prevNickname:"",
+            showNickname:"",
+            prevShowNickname:""
         };
     }
 
@@ -39,14 +48,52 @@ class SetNickname extends Notifications {
     } 
 
     onChangeNickname = (event) => { 
-        this.setState({nikename:event.target.value});
+        this.setState({nickname:event.target.value});
     }
 
-    onSaveNickname = (enent) =>{
-        let {nikename} = this.state;
+    onSaveNickname = (enent) =>{  
+        const {nickname} = this.state; 
+        const chatId = AppStore.getChatId();
+        const supergroupId = getSupergroupId(chatId);  
+        TdLibController.send({
+            '@type': 'sendCustomRequest',
+            "method": "chats.setNickname",
+            "parameters":JSON.stringify({"chatId": supergroupId,nickname:nickname})
+            })
+            .then(data => { 
+                 debugger
+            })
+            .catch(err => {  
+                debugger
+                console.log("err on get permissions");
+        });  
+    }  
+
+    static getDerivedStateFromProps(props, state) {  
+        if(props.nickname != state.prevNickname){
+            // let user = UserStore.get(UserStore.getMyId())  
+            // let nickname = "";
+            // if(user){ 
+            //     nickname = user.first_name;    
+            // }   
+            return {
+                nickname:props.nickname,
+                prevNickname:props.nickname, 
+            };
+        } 
+
+        if(props.showNickname != state.prevShowNickname){ 
+            return {
+                showNickname:props.nickname,
+                prevShowNickname:props.nickname, 
+            };
+        } 
+
+        return null;
     }
-    render() { 
-        const { nicknameDialog,nikename } = this.state; 
+
+    render() {  
+        const { nicknameDialog,nickname,showNickname} = this.state;  
         return (
             <>
                 <ListItem className='list-item-rounded' alignItems='flex-start' onClick={this.handleOpenChat}>
@@ -55,7 +102,7 @@ class SetNickname extends Notifications {
                         <div className='allCenter'>
                             我在本群的昵称
                         </div>
-                        <Button onClick={this.onOpenNicknameDialog} color="secondary">&gt;</Button>
+                        <Button onClick={this.onOpenNicknameDialog} color="secondary">{showNickname}&nbsp;&gt;</Button>
                     </div>
                 </ListItem>
 
@@ -66,12 +113,11 @@ class SetNickname extends Notifications {
                     onClose={this.onCloseNicknameDialog}
                     aria-labelledby='fatal-error-dialog-title'
                     aria-describedby='fatal-error-dialog-description'>
-                    <DialogTitle id='fatal-error-dialog-title'>设置屏蔽敏感词</DialogTitle>
+                    <DialogTitle id='fatal-error-dialog-title'>我在本群的昵称</DialogTitle>
                     <DialogContent>
                         <TextField
-                            helperText="多个词之间用逗号分开"
-                            rows={4}
-                            defaultValue={nikename}
+                            helperText="昵称修改后，只会在此群内显示，群里成员都可以看见" 
+                            defaultValue={nickname}
                             multiline
                             onChange={this.onChangeNickname}
                             variant="outlined" />
@@ -89,5 +135,8 @@ class SetNickname extends Notifications {
         );
     }
 }
-
+SetNickname.propTypes = {
+    nickname: PropTypes.string.isRequired,   
+    showNickname: PropTypes.string.isRequired,   
+}; 
 export default withTranslation()(SetNickname);
