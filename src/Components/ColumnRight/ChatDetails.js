@@ -43,6 +43,7 @@ import {
     getChatBio,
     isGroupChat,
     getGroupChatMembers,
+    getSupergroupId,
     getChatFullInfo,
     isPrivateChat,
     isMeChat, isChannelChat
@@ -61,8 +62,10 @@ import OptionStore from '../../Stores/OptionStore';
 import SupergroupStore from '../../Stores/SupergroupStore';
 import UserStore from '../../Stores/UserStore';
 import TdLibController from '../../Controllers/TdLibController';
+import SetNickname from './SetNickname';
 import './MoreListItem.css';
 import './ChatDetails.css';
+import AppStore from '../../Stores/ApplicationStore'; 
 import ChatTabs from './ChatTabs';
 class ChatDetails extends React.Component {
     constructor(props) {
@@ -373,6 +376,44 @@ class ChatDetails extends React.Component {
         media.handleVirtScroll(event, list);
     };
 
+    onGetUsername = () => { 
+        return;
+        let user = UserStore.get(UserStore.getMyId())  
+        let name = "";
+        if(user){ 
+            name = user.first_name;    
+        }   
+        const chatId = AppStore.getChatId(); 
+
+        let supergroupId = getSupergroupId(chatId)  
+        let uid = UserStore.getMyId();
+
+        // const chatId = AppStore.getChatId(); 
+
+        TdLibController.send({
+        '@type': 'getChatMember',
+        "chat_id": chatId, 
+        "user_id":uid, 
+        // "@extra":72,
+        // "filter": {
+        // "@type": "supergroupMembersFilterRestricted",
+        // },
+        }).then(data => { 
+            debugger;
+            // for(var i =0;i<data.members.length;i++){
+            //     let uid = UserStore.getMyId();
+            //     debugger;
+            //     if(data.members[i].user_id === UserStore.getMyId()){
+            //         let user000 = UserStore.get(data.members[i].user_id)  
+            //         debugger
+            //     }
+            // } 
+        }).catch(err => {   
+            debugger
+        });     
+        return name;
+    } 
+
     render() {
         const {
             backButton,
@@ -384,7 +425,7 @@ class ChatDetails extends React.Component {
             
         } = this.props; 
         // let {isUserChat} = this.state;
-       
+        let nickname = this.onGetUsername();
 
         let { counters, migratedCounters } = this.props;
         counters = counters || [0, 0, 0, 0, 0, 0];
@@ -534,6 +575,7 @@ class ChatDetails extends React.Component {
                                     </>
                                 )}
                                 <NotificationsListItem chatId={chatId} />
+                                <SetNickname nickname = {nickname} showNickname = {nickname}/>
                                 {popup && (
                                     <ListItem button className='list-item-rounded' alignItems='flex-start' onClick={this.handleOpenChat}>
                                         <ListItemText
