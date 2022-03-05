@@ -65,7 +65,7 @@ import TdLibController from '../../Controllers/TdLibController';
 import SetNickname from './SetNickname';
 import './MoreListItem.css';
 import './ChatDetails.css';
-import AppStore from '../../Stores/ApplicationStore'; 
+import AppStore from '../../Stores/ApplicationStore';
 import ChatTabs from './ChatTabs';
 class ChatDetails extends React.Component {
     constructor(props) {
@@ -79,8 +79,9 @@ class ChatDetails extends React.Component {
 
         this.members = new Map();
         this.state = {
-            prevChatId: chatId, 
-            nickname:null, 
+            prevChatId: chatId,
+            nickname: null,
+            invite_link: null
         };
     }
 
@@ -151,7 +152,7 @@ class ChatDetails extends React.Component {
 
     componentDidMount() {
         this.loadContent();
-        const { chatId } = this.props; 
+        const { chatId } = this.props;
         // TdLibController.send({
         //     '@type': 'getChat',
         //     "chat_id": chatId, 
@@ -162,7 +163,7 @@ class ChatDetails extends React.Component {
         //                this.setState({isUserChat:true});
         //            }
         //         }
-               
+
         //     })
         //     .catch(err => {   
         //         console.log("err on get permissions");
@@ -377,27 +378,40 @@ class ChatDetails extends React.Component {
         media.handleVirtScroll(event, list);
     };
 
-    onGetUsername = () => {   
-        const chatId = AppStore.getChatId();  
-        let uid = UserStore.getMyId();  
+    onGetUsername = () => {
+        const chatId = AppStore.getChatId();
+        let uid = UserStore.getMyId();
         TdLibController.send({
-        '@type': 'getChatMember',
-        "chat_id": chatId, 
-        "user_id":uid,  
-        }).then(data => {   
-            if(data.nickname ==""){
-                let user = UserStore.get(UserStore.getMyId())  
+            '@type': 'getChatMember',
+            "chat_id": chatId,
+            "user_id": uid,
+        }).then(data => {
+            if (data.nickname == "") {
+                let user = UserStore.get(UserStore.getMyId())
                 let name = "";
-                if(user){ 
-                    name = user.first_name;    
-                    this.setState({nickname:name}); 
-                }   
-            }else{
-                this.setState({nickname:data.nickname}); 
-            } 
-        }).catch(err => {    
-        });      
-    } 
+                if (user) {
+                    name = user.first_name;
+                    this.setState({ nickname: name });
+                }
+            } else {
+                this.setState({ nickname: data.nickname });
+            }
+        }).catch(err => {
+        });
+    }
+
+    onGetPublicLink = () => {
+        const chatId = AppStore.getChatId();
+        const supergroupId = getSupergroupId(chatId);
+        TdLibController.send({
+            '@type': 'getSupergroupFullInfo',
+            "supergroup_id": supergroupId,
+        }).then(data => {
+            this.setState({ invite_link: data.invite_link });
+        }).catch(err => {
+
+        });
+    }
 
     render() {
         const {
@@ -407,11 +421,12 @@ class ChatDetails extends React.Component {
             onClose,
             popup,
             t,
-            
-        } = this.props; 
+
+        } = this.props;
         // let {isUserChat} = this.state;
         this.onGetUsername();
-        let {nickname} = this.state;
+
+        let { nickname, invite_link } = this.state;
 
         let { counters, migratedCounters } = this.props;
         counters = counters || [0, 0, 0, 0, 0, 0];
@@ -479,18 +494,21 @@ class ChatDetails extends React.Component {
             openChatTitle = t('OpenGroup');
         }
 
-        let chatUrl = ''
+        let chatUrl = '';
+        let isPrivateChat00 = false;
         if (username) {
             if (isPrivateChat(chatId)) {
                 chatUrl = username;
+                isPrivateChat00 = true;
             } else {
-                const tMeUrl = OptionStore.get('t_me_url')
-                    .value
-                    .toLowerCase()
-                    .replace('https://', '')
-                    .replace('http://', '');
+                // const tMeUrl = OptionStore.get('t_me_url')
+                //     .value
+                //     .toLowerCase()
+                //     .replace('https://', '')
+                //     .replace('http://', '');
 
-                chatUrl = tMeUrl + username;
+                // chatUrl = tMeUrl + username;
+                chatUrl = invite_link;
             }
         }
 
@@ -501,7 +519,7 @@ class ChatDetails extends React.Component {
                     backButton={backButton}
                     onClose={onClose}
                     onClick={this.handleHeaderClick}
-                /> 
+                />
                 <div
                     ref={this.listRef}
                     className={classNames('chat-details-list', 'scrollbars-hidden')}
@@ -528,6 +546,7 @@ class ChatDetails extends React.Component {
                                         />
                                     </ListItem>
                                 )}
+
                                 {username && (
                                     <ListItem button className='list-item-rounded' alignItems='flex-start' onClick={this.handleUsernameHint}>
                                         <ListItemIcon>
@@ -561,7 +580,9 @@ class ChatDetails extends React.Component {
                                     </>
                                 )}
                                 <NotificationsListItem chatId={chatId} />
-                                <SetNickname nickname = {nickname}/>
+                                {!isPrivateChat00 && (
+                                    <SetNickname nickname={nickname} />
+                                )}
                                 {popup && (
                                     <ListItem button className='list-item-rounded' alignItems='flex-start' onClick={this.handleOpenChat}>
                                         <ListItemText
@@ -578,14 +599,14 @@ class ChatDetails extends React.Component {
                         )}
                     </div>
 
-                    <div ref={this.dividerRef}/>
-                    <SharedMediaTabs chatId={chatId} onClick={this.handleTabClick}/>
-                    <SharedMediaContent ref={this.mediaRef} chatId={chatId} popup={popup}/>
+                    <div ref={this.dividerRef} />
+                    <SharedMediaTabs chatId={chatId} onClick={this.handleTabClick} />
+                    <SharedMediaContent ref={this.mediaRef} chatId={chatId} popup={popup} />
 
                     {/* {!isUserChat && (
                         <ChatTabs chatId={chatId}></ChatTabs>
                     )} */}
-                    
+
                 </div>
             </>
         );

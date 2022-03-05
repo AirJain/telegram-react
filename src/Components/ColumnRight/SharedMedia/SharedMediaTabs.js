@@ -15,7 +15,7 @@ import MessageStore from '../../../Stores/MessageStore';
 import TdLibController from '../../../Controllers/TdLibController';
 import './SharedMediaTabs.css';
 import AppStore from '../../../Stores/ApplicationStore';
-import { isAdmin } from '../../../Utils/Chat';  
+import { isAdmin,isPrivateChat } from '../../../Utils/Chat';  
 class SharedMediaTabs extends React.Component {
     constructor(props) {
         super(props);
@@ -368,7 +368,11 @@ class SharedMediaTabs extends React.Component {
         const { selectedIndex, members, photoAndVideo, document, audio, url, voiceNote, groupsInCommon,isCurUserAdmin } = this.state;
         //获取当前用户是否为admin 
         const chatId = AppStore.getChatId();
-        let amAdmin = isAdmin(chatId);    
+        let amAdmin = isAdmin(chatId); 
+        let isPrivateChat00 = false; 
+        if (isPrivateChat(chatId)) {
+            isPrivateChat00 = true;
+        }   
         const tabsCount =
             (members.length > 0 ? 1 : 0) +
             (photoAndVideo.length > 0 ? 1 : 0) +
@@ -404,7 +408,7 @@ class SharedMediaTabs extends React.Component {
                             <span>{t('GroupMembers')}</span>
                         </div>
                     )} 
-                    {amAdmin && (
+                    {amAdmin && !isPrivateChat00 && (
                         <div
                             ref={r => this.filterRef.set('permissions', r)}
                             className={classNames('filter', {'shared-media-tab': tabsCount > 1}, { 'item-selected': selectedIndex === 7})}

@@ -26,8 +26,8 @@ import './SharedMediaContent.css';
 import Chat from '../../Tile/Chat';
 import ChatTabs from '../ChatTabs';
 import AppStore from '../../../Stores/ApplicationStore';
-import { isAdmin } from '../../../Utils/Chat';  
-const overScanCount = 5; 
+import { isAdmin, isPrivateChat } from '../../../Utils/Chat';
+const overScanCount = 5;
 
 class SharedMediaContent extends React.Component {
     constructor(props) {
@@ -109,17 +109,17 @@ class SharedMediaContent extends React.Component {
         return undefined;
     }
 
-    static getItemTemplate = (selectedIndex, item, onOpen) => { 
-        const migratedChatId = -1; 
+    static getItemTemplate = (selectedIndex, item, onOpen) => {
+        const migratedChatId = -1;
         switch (selectedIndex) {
             case 0: {
-                const { user_id: id } = item; 
+                const { user_id: id } = item;
                 return (
                     <ListItem
                         button
                         key={`user_id=${id}`}
                         className='groups-in-common-item'>
-                        <User userId={id} onSelect={onOpen}/>
+                        <User userId={id} onSelect={onOpen} />
                     </ListItem>
                 );
             }
@@ -837,19 +837,28 @@ class SharedMediaContent extends React.Component {
             voiceNote,
             groupsInCommon
         } = this.state;
-         //获取当前用户是否为admin ，是则显示权限，否则不显示权限。
-         const chatId = AppStore.getChatId();
-         let amAdmin = isAdmin(chatId);   
-         if(selectedIndex === 7 && amAdmin){
-             const chatId = AppStore.getChatId(); 
-             return (
-                 <ChatTabs chatId={chatId}></ChatTabs>
-             )
-         }
-         //切换是否为管理员时，可以会出现一个bug。
+        //获取当前用户是否为admin ，是则显示权限，否则不显示权限。
+        const chatId = AppStore.getChatId();
+        let amAdmin = isAdmin(chatId); 
+
+        let isPrivateChat00 = false; 
+        if (isPrivateChat(chatId)) {
+            isPrivateChat00 = true;
+        }
+
+        if (selectedIndex === 7 && amAdmin && isPrivateChat00 === false) { 
+            return (
+                <ChatTabs chatId={chatId}></ChatTabs>
+            )
+        }
+        //切换是否为管理员时，可以会出现一个bug。
         //  else if(selectedIndex === 7 && !amAdmin){
         //     selectedIndex = 0;
-        //  }
+        //  } 
+
+      
+
+
 
         // console.log('[vlist] render', [selectedIndex, items, renderIds]); 
         const hasItems = members && members.length > 0
@@ -860,7 +869,7 @@ class SharedMediaContent extends React.Component {
             || voiceNote && voiceNote.length > 0
             || groupsInCommon && groupsInCommon.length > 0;
         if (!hasItems) {
-            return (<div ref={this.listRef}/>);
+            return (<div ref={this.listRef} />);
         }
 
         if (selectedIndex === 2 || selectedIndex === 3 || selectedIndex === 5) {
@@ -885,7 +894,7 @@ class SharedMediaContent extends React.Component {
                     {controls}
                 </div>
             );
-        } 
+        }
 
         return (
             <div ref={this.listRef} className={classNames('shared-media-content', { 'shared-photos-list': selectedIndex === 1 })}>
