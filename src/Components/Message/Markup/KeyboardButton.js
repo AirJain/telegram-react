@@ -364,8 +364,9 @@ class KeyboardButton extends React.Component {
         // openChat(chatId); 
         openChat(chatId, null, false);
     } 
-    //确定打开群聊
-    onConfirmOpen = () =>{
+    
+    //确定打开群聊,,这个事件需要用 onMouseDown。否则聊天框的顶部会弹出 转发信息的对话框
+    onConfirmOpen = event =>{ 
         const {joinChatId} = this.state; 
         this.onCloseMeInGroupDialog();
         this.onOpenChat(joinChatId);
@@ -432,7 +433,7 @@ class KeyboardButton extends React.Component {
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={this.onConfirmOpen} color='primary' autoFocus>
+                        <Button onMouseDown={this.onConfirmOpen} color='primary' autoFocus>
                             确定
                         </Button>
                         <Button onClick={this.onCloseMeInGroupDialog} color='primary' autoFocus>
